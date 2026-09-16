@@ -4,10 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hammad World — Tiles, Sanitaryware &amp; Ceiling Materials</title>
+<meta name="theme-color" content="#0B2545">
+<!-- Font CSS comes from googleapis, but the font FILES come from gstatic —
+     without this second hint the browser pays a fresh DNS+TLS round trip
+     before any text renders in the real typeface. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Product photos all come from R2; warming that connection early means the
+     first image starts downloading sooner instead of after a cold handshake. -->
+<link rel="preconnect" href="https://pub-ce2a5311865c4b9bbe03bb9309ba0a29.r2.dev" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
   :root{
     --bg:#150B24;
@@ -26,6 +32,11 @@
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
+  /* Stops the page behind a full-screen overlay from scrolling along with it,
+     and prevents the rubber-band bounce leaking into the parent page on iOS. */
+  .lightbox, .menu-overlay{overscroll-behavior:contain;}
+  /* Horizontal scrollers keep native momentum feel on iOS Safari. */
+  .catbrowse .row, .showcase .row{-webkit-overflow-scrolling:touch;}
   body{
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
     background:var(--cream);
@@ -298,8 +309,45 @@ const firebaseConfig = {
   messagingSenderId: "1022266009839",
   appId: "1:1022266009839:web:4129f10f8856d36d25531a"
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+/* The public catalog is read-only and world-readable, so it's fetched directly
+   over HTTPS instead of loading the ~300KB Firebase SDK just to run one query.
+   Firestore's REST format wraps each value in a type tag, so unwrapValue()
+   converts a document back into a plain object. */
+/* Browsing views show images small, so they use the lightweight thumbnail.
+   Photos uploaded before thumbnails existed have none — fall back to the full
+   image so they still display rather than breaking. */
+function thumbOf(p, i){
+  if(!p) return null;
+  i = i||0;
+  if(p.thumbs && p.thumbs[i]) return p.thumbs[i];
+  return (p.photos && p.photos[i]) ? p.photos[i] : null;
+}
+function fullOf(p, i){
+  if(!p) return null;
+  i = i||0;
+  return (p.photos && p.photos[i]) ? p.photos[i] : (p.thumbs ? p.thumbs[i] : null);
+}
+function unwrapValue(v){
+  if(v==null) return null;
+  if('stringValue' in v) return v.stringValue;
+  if('booleanValue' in v) return v.booleanValue;
+  if('integerValue' in v) return Number(v.integerValue);
+  if('doubleValue' in v) return Number(v.doubleValue);
+  if('timestampValue' in v) return v.timestampValue;
+  if('nullValue' in v) return null;
+  if('arrayValue' in v) return (v.arrayValue.values||[]).map(unwrapValue);
+  if('mapValue' in v){
+    const out = {};
+    Object.entries(v.mapValue.fields||{}).forEach(([k,val])=> out[k]=unwrapValue(val));
+    return out;
+  }
+  return null;
+}
+function unwrapDoc(doc){
+  const out = {id: (doc.name||'').split('/').pop()};
+  Object.entries(doc.fields||{}).forEach(([k,v])=> out[k]=unwrapValue(v));
+  return out;
+}
 
 let allProducts = [];
 let activeCategory = '';
@@ -340,8 +388,16 @@ function lightboxNav(dir){
 function showLightboxImage(){
   const p = currentList[lightboxProductIdx];
   if(!p || !p.photos || !p.photos.length) return;
-  document.getElementById('lightboxImg').src = p.photos[lightboxPhotoIdx];
-  document.getElementById('lightboxImg').alt = p.itemName||'';
+  const img = document.getElementById('lightboxImg');
+  // Show the already-cached thumbnail immediately so the tap feels instant,
+  // then swap in the full-resolution image once it has loaded.
+  const thumb = thumbOf(p, lightboxPhotoIdx);
+  const full  = fullOf(p, lightboxPhotoIdx);
+  if(thumb && thumb !== full) img.src = thumb;
+  const hi = new Image();
+  hi.onload = ()=>{ if(lightboxProductIdx!==null) img.src = full; };
+  hi.src = full;
+  img.alt = p.itemName||'';
   const nav = p.photos.length > 1;
   document.querySelector('.lb-prev').style.display = nav ? 'block' : 'none';
   document.querySelector('.lb-next').style.display = nav ? 'block' : 'none';
@@ -399,7 +455,7 @@ function renderShowcase(){
     const count = allProducts.filter(p=>p.category===c).length;
     return `
       <div class="frame" onclick="selectCategory('${c.replace(/'/g,"\\'")}')" style="cursor:pointer;">
-        <img src="${withPhoto.photos[0]}" alt="${c}"/>
+        <img src="${thumbOf(withPhoto,0)}" alt="${c}"/>
         <div class="caption">
           <div class="catlabel">${c}</div>
           <div class="catsub">${count} product${count===1?'':'s'} available</div>
@@ -421,7 +477,7 @@ function renderCategoryBrowse(){
     const cards = cats.map(c=>{
       const inCat = allProducts.filter(p=>p.category===c);
       const withPhoto = inCat.find(p=>p.photos && p.photos[0]);
-      const photo = withPhoto ? withPhoto.photos[0] : null;
+      const photo = thumbOf(withPhoto,0);
       return `
         <div class="catcard" onclick="selectCategory('${c.replace(/'/g,"\\'")}')">
           ${photo ? `<img src="${photo}" alt="${c}"/>` : `<div style="aspect-ratio:1/1;background:var(--bg-deep);"></div>`}
@@ -449,7 +505,7 @@ function renderCategoryBrowse(){
     let cards = subs.map(sub=>{
       const inSub = inCat.filter(p=>p.subcategory===sub);
       const withPhoto = inSub.find(p=>p.photos && p.photos[0]);
-      const photo = withPhoto ? withPhoto.photos[0] : null;
+      const photo = thumbOf(withPhoto,0);
       return `
         <div class="catcard" onclick="selectSubcategory('${sub.replace(/'/g,"\\'")}')">
           ${photo ? `<img src="${photo}" alt="${sub}"/>` : `<div style="aspect-ratio:1/1;background:var(--bg-deep);"></div>`}
@@ -460,7 +516,7 @@ function renderCategoryBrowse(){
     if(hasUncategorized){
       const inOther = inCat.filter(p=>!p.subcategory);
       const withPhoto = inOther.find(p=>p.photos && p.photos[0]);
-      const photo = withPhoto ? withPhoto.photos[0] : null;
+      const photo = thumbOf(withPhoto,0);
       cards += `
         <div class="catcard" onclick="selectSubcategory('__other__')">
           ${photo ? `<img src="${photo}" alt="Other"/>` : `<div style="aspect-ratio:1/1;background:var(--bg-deep);"></div>`}
@@ -532,7 +588,7 @@ function renderGrid(){
   currentList = list;
   grid.innerHTML = list.map((p,pIdx)=>{
     const photos = p.photos && p.photos.length ? p.photos : [];
-    const photo = photos[0] || null;
+    const photo = thumbOf(p,0);
     const metaLine1 = p.subcategory || p.category || '';
     const metaLine2 = [p.material, p.size].filter(Boolean).join(', ');
     const statusLabel = p.status || 'In Stock';
@@ -555,18 +611,35 @@ function renderGrid(){
   }).join('');
 }
 
-db.collection('catalog').get().then(snap=>{
-  allProducts = snap.docs.map(d=>({id:d.id, ...d.data()})).filter(p=>p.itemName);
-  allProducts.sort((a,b)=> (a.itemName||'').localeCompare(b.itemName||''));
-  renderShowcase();
-  renderCategoryBrowse();
-  renderMenuProductLinks();
-  renderGrid();
-}).catch(err=>{
-  console.error(err);
-  document.getElementById('grid').innerHTML =
-    `<div class="empty">Could not load products.<br><br><b>Technical detail:</b> ${err.code||''} ${err.message||err}<br><br>If this says "permission-denied," the Firestore rules for the "catalog" collection likely need to be re-published.</div>`;
-});
+async function loadCatalog(){
+  const base = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/catalog`;
+  let docs = [], pageToken = '';
+  try{
+    // Firestore returns at most a few hundred documents per response, so follow
+    // the page tokens until everything is in — otherwise a growing catalog would
+    // silently stop showing its newest products.
+    do {
+      const url = base + `?pageSize=300&key=${firebaseConfig.apiKey}` + (pageToken?`&pageToken=${pageToken}`:'');
+      const resp = await fetch(url);
+      if(!resp.ok) throw new Error('HTTP '+resp.status+' — '+(await resp.text()).slice(0,200));
+      const data = await resp.json();
+      docs = docs.concat(data.documents||[]);
+      pageToken = data.nextPageToken||'';
+    } while(pageToken);
+
+    allProducts = docs.map(unwrapDoc).filter(p=>p.itemName);
+    allProducts.sort((a,b)=> (a.itemName||'').localeCompare(b.itemName||''));
+    renderShowcase();
+    renderCategoryBrowse();
+    renderMenuProductLinks();
+    renderGrid();
+  }catch(err){
+    console.error(err);
+    document.getElementById('grid').innerHTML =
+      `<div class="empty">Could not load products.<br><br><b>Technical detail:</b> ${err.message||err}<br><br>If this mentions permission, the Firestore rules for the "catalog" collection likely need to be re-published.</div>`;
+  }
+}
+loadCatalog();
 </script>
 </body>
 </html>
