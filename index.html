@@ -10,14 +10,18 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
   :root{
-    --green-900:#0B4A36;
-    --green-700:#178A63;
-    --coral:#FF5A36;
-    --gold:#C9971F;
-    --cream:#FBF7F0;
-    --ink:#1C2620;
-    --ink-500:#5F6D66;
-    --line:#DCE6E0;
+    --bg:#150B24;
+    --bg-panel:#1F1035;
+    --bg-deep:#0C0616;
+    --green-900:#2A1547;
+    --green-700:#4A2472;
+    --coral:#D4AF37;
+    --gold:#D4AF37;
+    --gold-light:#F5DFA0;
+    --cream:#150B24;
+    --ink:#F3EEE6;
+    --ink-500:#B4A3CC;
+    --line:rgba(212,175,55,0.18);
     --white:#FFFFFF;
   }
   *{box-sizing:border-box;}
@@ -31,74 +35,188 @@
 
   /* ---------- Hero ---------- */
   header.hero{
-    background:linear-gradient(135deg, var(--green-900) 0%, var(--green-700) 100%);
+    background:linear-gradient(160deg, #0B2545 0%, #1B4F7A 55%, #0B2545 100%);
     color:var(--white);
-    padding:40px 20px 32px;
+    padding:56px 20px 48px;
     text-align:center;
+    position:relative;
+    overflow:hidden;
   }
-  header.hero .brand{font-size:28px;font-weight:800;letter-spacing:0.2px;}
-  header.hero .tagline{font-size:14.5px;opacity:0.88;margin-top:6px;}
+  header.hero::after{
+    content:'';position:absolute;top:-60%;left:-20%;width:70%;height:220%;
+    background:linear-gradient(100deg, transparent 40%, rgba(240,213,132,0.16) 48%, transparent 56%);
+    pointer-events:none;
+  }
+  header.hero .inner{position:relative;max-width:640px;margin:0 auto;}
+  header.hero .brand{font-size:36px;font-weight:800;line-height:1.15;letter-spacing:0.2px;}
+  header.hero .motto{font-size:16px;font-weight:600;color:var(--gold);margin-top:8px;}
+  header.hero .tagline{font-size:15.5px;opacity:0.9;margin-top:12px;line-height:1.5;}
   header.hero .contact{
-    display:inline-block;margin-top:18px;background:var(--coral);color:var(--white);
-    padding:10px 22px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none;
+    display:inline-block;margin-top:24px;
+    background:linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 55%, #A9800F 100%);
+    color:var(--bg-deep);
+    padding:13px 32px;border-radius:8px;font-weight:800;font-size:15px;text-decoration:none;
+    box-shadow:0 0 28px rgba(212,175,55,0.45), 0 4px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.5);
   }
+  @media (min-width:700px){ header.hero .brand{font-size:46px;} }
 
   /* ---------- Filter bar ---------- */
+  .showcase{max-width:1280px;margin:0 auto;padding:34px 16px 0;}
+  .showcase .row{display:grid;grid-template-columns:1fr;gap:14px;}
+  .showcase .frame{
+    position:relative;border-radius:12px;overflow:hidden;aspect-ratio:16/10;
+    border:1px solid var(--line);background:var(--bg-panel);
+  }
+  .showcase .frame img{width:100%;height:100%;object-fit:cover;display:block;}
+  .showcase .frame .caption{
+    position:absolute;left:0;right:0;bottom:0;padding:22px 20px 16px;
+    background:linear-gradient(0deg, rgba(8,4,15,0.85) 0%, transparent 100%);
+  }
+  .showcase .frame .caption .catlabel{
+    font-family:'Poppins',sans-serif;font-size:20px;font-weight:700;color:var(--white);
+  }
+  .showcase .frame .caption .catsub{font-size:12.5px;color:var(--gold-light);margin-top:2px;}
+  @media (min-width:800px){
+    .showcase .row{grid-template-columns:repeat(3, 1fr);}
+    .showcase .frame{aspect-ratio:3/4;}
+  }
+
+  .catbrowse{max-width:1100px;margin:0 auto;padding:28px 16px 4px;}
+  .catbrowse h2{font-size:18px;font-weight:700;margin:0 0 14px;color:var(--ink);}
+  .catbrowse .row{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;}
+  .catcard{
+    flex:0 0 auto;width:140px;cursor:pointer;background:var(--bg-panel);border:1.5px solid var(--line);
+    border-radius:10px;overflow:hidden;
+  }
+  .catcard img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:var(--bg-deep);}
+  .catcard .catname{padding:9px 10px;font-size:13px;font-weight:700;}
+  .catcard .catcount{padding:0 10px 9px;font-size:11px;color:var(--ink-500);}
+  .backlink{
+    background:none;border:none;color:var(--gold);font-size:13px;font-weight:600;cursor:pointer;
+    padding:0 0 12px;
+  }
+  .catcard.active{border-color:var(--gold);border-width:2px;box-shadow:0 0 16px rgba(212,175,55,0.35);}
+  .catcard.active .catcount{color:var(--gold);font-weight:600;}
+
   .filterbar{
     max-width:1100px;margin:0 auto;padding:18px 16px 6px;
     display:flex;gap:10px;flex-wrap:wrap;align-items:center;
   }
   .filterbar input[type=search]{
     flex:1;min-width:180px;padding:10px 14px;border:1.5px solid var(--line);border-radius:8px;
-    font-size:14px;background:var(--white);
+    font-size:14px;background:var(--bg-panel);color:var(--ink);
   }
-  .catpill{
-    padding:8px 16px;border-radius:6px;border:1.5px solid var(--line);background:var(--white);
-    font-size:13.5px;font-weight:600;color:var(--ink-500);cursor:pointer;white-space:nowrap;
-  }
-  .catpill.active{background:var(--green-900);color:var(--white);border-color:var(--green-900);}
+  .filterbar input[type=search]::placeholder{color:var(--ink-500);}
 
   /* ---------- The tile grid — literal grout lines between products ---------- */
-  .gridwrap{max-width:1100px;margin:20px auto 40px;padding:0 16px;}
+  .gridwrap{max-width:1100px;margin:32px auto 56px;padding:0 16px;}
   .tilegrid{
     display:grid;
     grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));
     gap:2px;
-    background:var(--ink);
-    border:2px solid var(--ink);
+    background:var(--bg-deep);
+    border:2px solid var(--bg-deep);
   }
   .tile{
-    background:var(--white);
+    background:var(--bg-panel);
     display:flex;flex-direction:column;
     position:relative;
   }
   .tile .photo{
-    width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:var(--line);
+    width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:var(--bg-deep);
   }
   .tile .noPhoto{
     width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;
-    background:var(--line);color:var(--ink-500);font-size:12px;text-align:center;padding:8px;
+    background:var(--bg-deep);color:var(--ink-500);font-size:12px;text-align:center;padding:8px;
   }
+  .photowrap{position:relative;}
   .tile .status{
     position:absolute;top:8px;left:8px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:4px;
     color:var(--white);
   }
-  .status.instock{background:var(--green-700);}
-  .status.limited{background:var(--gold);}
+  .tile .photocount{
+    position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.65);color:var(--white);
+    font-size:11px;font-weight:600;padding:3px 8px;border-radius:5px;
+  }
+  .status.instock{background:#1F7A3D;}
+  .status.limited{background:#B4790E;}
   .status.outofstock{background:#A3372E;}
   .status.comingsoon{background:var(--ink-500);}
-  .tile .info{padding:10px 12px 12px;}
+  .tile .info{padding:14px 14px 16px;}
   .tile .name{font-size:13.5px;font-weight:700;line-height:1.3;margin-bottom:2px;}
   .tile .meta{font-size:11.5px;color:var(--ink-500);line-height:1.5;}
   .tile .meta span{display:block;}
   .tile .price{font-size:11.5px;color:var(--coral);font-weight:700;margin-top:6px;}
   .tile .enquire{
-    display:block;margin-top:8px;text-align:center;background:var(--green-900);color:var(--white);
-    font-size:12px;font-weight:600;padding:7px;border-radius:6px;text-decoration:none;
+    display:block;margin-top:8px;text-align:center;
+    background:linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 60%, #A9800F 100%);
+    color:var(--bg-deep);
+    font-size:12px;font-weight:800;padding:7px;border-radius:6px;text-decoration:none;
+    box-shadow:0 0 12px rgba(212,175,55,0.3), inset 0 1px 0 rgba(255,255,255,0.55);
   }
 
   .empty{grid-column:1/-1;padding:60px 20px;text-align:center;color:var(--ink-500);}
   footer{text-align:center;padding:24px 16px;color:var(--ink-500);font-size:12.5px;}
+
+  .tile .photo{cursor:zoom-in;}
+
+  /* ---------- Lightbox ---------- */
+  .lightbox{
+    display:none;position:fixed;inset:0;background:rgba(10,15,12,0.94);z-index:100;
+    align-items:center;justify-content:center;
+  }
+  .lightbox.open{display:flex;}
+  .lightbox img{max-width:92vw;max-height:82vh;object-fit:contain;border-radius:4px;}
+  .lb-close{
+    position:absolute;top:16px;right:18px;background:none;border:none;color:var(--white);
+    font-size:32px;line-height:1;cursor:pointer;padding:4px 10px;
+  }
+  .lb-nav{
+    position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.12);
+    border:none;color:var(--white);font-size:30px;width:46px;height:46px;border-radius:50%;
+    cursor:pointer;line-height:1;
+  }
+  .lb-prev{left:12px;} .lb-next{right:12px;}
+  .lb-counter{
+    position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
+    color:var(--white);font-size:13px;background:rgba(255,255,255,0.12);padding:4px 12px;border-radius:20px;
+  }
+
+  /* ---------- Hamburger menu ---------- */
+  .menu-toggle{
+    position:absolute;top:18px;right:18px;background:rgba(255,255,255,0.1);border:1px solid rgba(212,175,55,0.35);
+    color:var(--white);font-size:20px;width:42px;height:42px;border-radius:8px;cursor:pointer;z-index:20;
+  }
+  .menu-overlay{
+    display:none;position:fixed;inset:0;background:rgba(8,4,15,0.7);z-index:90;
+  }
+  .menu-overlay.open{display:block;}
+  .menu-panel{
+    position:absolute;top:0;right:0;bottom:0;width:min(340px, 88vw);
+    background:var(--bg-panel);border-left:1px solid var(--line);padding:60px 24px 30px;
+    overflow-y:auto;
+  }
+  .menu-panel h3{color:var(--gold);font-size:14px;margin:22px 0 8px;}
+  .menu-panel h3:first-of-type{margin-top:0;}
+  .menu-panel p{font-size:13.5px;line-height:1.6;color:var(--ink-500);margin:0 0 6px;}
+  .menu-hours{color:var(--ink)!important;font-weight:600;}
+  .menu-link{
+    display:block;font-size:13.5px;color:var(--ink);text-decoration:none;margin-top:8px;
+    padding:9px 0;border-bottom:1px solid var(--line);
+  }
+  .menu-close{
+    position:absolute;top:16px;right:16px;background:none;border:none;color:var(--ink-500);
+    font-size:28px;cursor:pointer;line-height:1;
+  }
+
+  /* ---------- Desktop refinements ---------- */
+  @media (min-width:900px){
+    .gridwrap, .catbrowse, .filterbar{max-width:1280px;}
+    header.hero .tagline{font-size:17px;max-width:560px;margin-left:auto;margin-right:auto;}
+    header.hero{padding:72px 20px 60px;}
+    .tilegrid{grid-template-columns:repeat(auto-fill, minmax(210px, 1fr));}
+    .catcard{width:170px;}
+  }
 
   @media (min-width:700px){
     .tilegrid{grid-template-columns:repeat(auto-fill, minmax(190px, 1fr));}
@@ -108,20 +226,53 @@
 <body>
 
 <header class="hero">
-  <div class="brand">Hammad World</div>
-  <div class="tagline">Tiles &middot; Sanitaryware &middot; Ceiling Materials</div>
-  <a class="contact" id="topWhatsapp" href="#" target="_blank" rel="noopener">Chat on WhatsApp</a>
+  <button class="menu-toggle" onclick="toggleMenu()" aria-label="Menu">☰</button>
+  <div class="inner">
+    <div class="brand">Hammad World</div>
+    <div class="motto">Interior and Exterior Solution</div>
+    <div class="tagline">Tiles, sanitaryware and ceiling materials for finishing a space right — browse what's on our shelves right now, then message us for pricing.</div>
+    <a class="contact" id="topWhatsapp" href="#" target="_blank" rel="noopener">Chat on WhatsApp</a>
+  </div>
 </header>
 
-<div class="filterbar">
-  <input type="search" id="searchBox" placeholder="Search products..." oninput="renderGrid()"/>
+<div class="menu-overlay" id="menuOverlay" onclick="if(event.target===this) closeMenu()">
+  <div class="menu-panel">
+    <button class="menu-close" onclick="closeMenu()">×</button>
+
+    <h3>About</h3>
+    <p>Hammad World is your local source for tiles, sanitaryware and ceiling materials — everything you need to finish a space right, from floor to ceiling.</p>
+
+    <h3>Location</h3>
+    <p>Kazir Bazar, Ratabari, West Side Of Kazir Bazar Jama Masjid,<br/>Dist. Sribhumi (Karimganj), Assam — 788735</p>
+    <a class="menu-link" href="https://maps.app.goo.gl/tXprMeVhuYcXtPev8" target="_blank" rel="noopener">📍 Get Directions</a>
+    <p class="menu-hours">Open daily: 9:30 AM – 8:30 PM</p>
+
+    <h3>Contact</h3>
+    <a class="menu-link" id="menuWhatsapp" href="#" target="_blank" rel="noopener">💬 Chat on WhatsApp</a>
+    <a class="menu-link" id="menuCall" href="#">📞 Call us</a>
+  </div>
 </div>
-<div class="filterbar" id="categoryPills" style="padding-top:0;"></div>
+
+<section class="showcase" id="showcase"></section>
+
+<section class="catbrowse" id="catBrowse"></section>
+
+<div class="filterbar">
+  <input type="search" id="searchBox" placeholder="Search by product name or category..." oninput="renderGrid()"/>
+</div>
 
 <div class="gridwrap">
   <div class="tilegrid" id="grid">
     <div class="empty">Loading products...</div>
   </div>
+</div>
+
+<div id="lightbox" class="lightbox" onclick="if(event.target===this) closeLightbox()">
+  <button class="lb-close" onclick="closeLightbox()">×</button>
+  <button class="lb-nav lb-prev" onclick="lightboxNav(-1)">‹</button>
+  <img id="lightboxImg" src="" alt=""/>
+  <button class="lb-nav lb-next" onclick="lightboxNav(1)">›</button>
+  <div class="lb-counter" id="lightboxCounter"></div>
 </div>
 
 <footer>Prices on request — contact us on WhatsApp for the latest rates.</footer>
@@ -145,6 +296,48 @@ const db = firebase.firestore();
 
 let allProducts = [];
 let activeCategory = '';
+let currentList = [];
+let lightboxProductIdx = null;
+let lightboxPhotoIdx = 0;
+
+function openLightbox(productIdx, photoIdx){
+  lightboxProductIdx = productIdx;
+  lightboxPhotoIdx = photoIdx;
+  showLightboxImage();
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('open');
+  lightboxProductIdx = null;
+}
+function lightboxNav(dir){
+  const p = currentList[lightboxProductIdx];
+  if(!p || !p.photos) return;
+  const n = p.photos.length;
+  lightboxPhotoIdx = (lightboxPhotoIdx + dir + n) % n;
+  showLightboxImage();
+}
+function showLightboxImage(){
+  const p = currentList[lightboxProductIdx];
+  if(!p || !p.photos || !p.photos.length) return;
+  document.getElementById('lightboxImg').src = p.photos[lightboxPhotoIdx];
+  document.getElementById('lightboxImg').alt = p.itemName||'';
+  const nav = p.photos.length > 1;
+  document.querySelector('.lb-prev').style.display = nav ? 'block' : 'none';
+  document.querySelector('.lb-next').style.display = nav ? 'block' : 'none';
+  document.getElementById('lightboxCounter').textContent = nav ? (lightboxPhotoIdx+1)+' / '+p.photos.length : '';
+}
+window.openLightbox = openLightbox;
+window.closeLightbox = closeLightbox;
+window.lightboxNav = lightboxNav;
+document.addEventListener('keydown', e=>{
+  if(document.getElementById('lightbox').classList.contains('open')){
+    if(e.key==='Escape') closeLightbox();
+    if(e.key==='ArrowLeft') lightboxNav(-1);
+    if(e.key==='ArrowRight') lightboxNav(1);
+  }
+  if(e.key==='Escape' && document.getElementById('menuOverlay').classList.contains('open')) closeMenu();
+});
 
 function waLink(productName){
   const msg = productName
@@ -153,6 +346,13 @@ function waLink(productName){
   return `https://wa.me/${SHOP_WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
 }
 document.getElementById('topWhatsapp').href = waLink();
+document.getElementById('menuWhatsapp').href = waLink();
+document.getElementById('menuCall').href = 'tel:+'+SHOP_WHATSAPP_NUMBER;
+
+function toggleMenu(){ document.getElementById('menuOverlay').classList.add('open'); }
+function closeMenu(){ document.getElementById('menuOverlay').classList.remove('open'); }
+window.toggleMenu = toggleMenu;
+window.closeMenu = closeMenu;
 
 function statusClass(status){
   if(status==='In Stock') return 'instock';
@@ -161,41 +361,161 @@ function statusClass(status){
   return 'comingsoon';
 }
 
-function renderCategoryPills(){
-  const cats = Array.from(new Set(allProducts.map(p=>p.category).filter(Boolean))).sort();
-  const el = document.getElementById('categoryPills');
-  el.innerHTML = `<button class="catpill ${activeCategory===''?'active':''}" onclick="setCategory('')">All</button>` +
-    cats.map(c=>`<button class="catpill ${activeCategory===c?'active':''}" onclick="setCategory('${c.replace(/'/g,"\\'")}')">${c}</button>`).join('');
+function renderShowcase(){
+  const el = document.getElementById('showcase');
+  const cats = Array.from(new Set(allProducts.map(p=>p.category).filter(Boolean)));
+  const frames = cats.map(c=>{
+    const withPhoto = allProducts.find(p=>p.category===c && p.photos && p.photos[0]);
+    if(!withPhoto) return '';
+    const count = allProducts.filter(p=>p.category===c).length;
+    return `
+      <div class="frame" onclick="selectCategory('${c.replace(/'/g,"\\'")}')" style="cursor:pointer;">
+        <img src="${withPhoto.photos[0]}" alt="${c}"/>
+        <div class="caption">
+          <div class="catlabel">${c}</div>
+          <div class="catsub">${count} product${count===1?'':'s'} available</div>
+        </div>
+      </div>`;
+  }).filter(Boolean);
+  el.innerHTML = frames.length ? `<div class="row">${frames.join('')}</div>` : '';
 }
-function setCategory(c){ activeCategory = c; renderCategoryPills(); renderGrid(); }
-window.setCategory = setCategory;
+
+let activeSubcategory = '';
+
+function renderCategoryBrowse(){
+  const el = document.getElementById('catBrowse');
+
+  // LEVEL 1: top categories
+  if(!activeCategory){
+    const cats = Array.from(new Set(allProducts.map(p=>p.category).filter(Boolean)));
+    if(!cats.length){ el.innerHTML=''; return; }
+    const cards = cats.map(c=>{
+      const inCat = allProducts.filter(p=>p.category===c);
+      const withPhoto = inCat.find(p=>p.photos && p.photos[0]);
+      const photo = withPhoto ? withPhoto.photos[0] : null;
+      return `
+        <div class="catcard" onclick="selectCategory('${c.replace(/'/g,"\\'")}')">
+          ${photo ? `<img src="${photo}" alt="${c}"/>` : `<div style="aspect-ratio:1/1;background:var(--bg-deep);"></div>`}
+          <div class="catname">${c}</div>
+          <div class="catcount">${inCat.length} item${inCat.length===1?'':'s'}</div>
+        </div>`;
+    }).join('');
+    el.innerHTML = `<h2>Browse by category</h2><div class="row">${cards}</div>`;
+    return;
+  }
+
+  const inCat = allProducts.filter(p=>p.category===activeCategory);
+
+  // LEVEL 2: subcategories within the chosen category
+  if(!activeSubcategory){
+    const subs = Array.from(new Set(inCat.map(p=>p.subcategory).filter(Boolean)));
+    if(!subs.length){
+      // Nothing to drill into — go straight to products for this category.
+      activeSubcategory = '__all__';
+      renderGrid();
+      el.innerHTML = `<button class="backlink" onclick="backToCategories()">← All categories</button><h2>${activeCategory}</h2>`;
+      return;
+    }
+    const hasUncategorized = inCat.some(p=>!p.subcategory);
+    let cards = subs.map(sub=>{
+      const inSub = inCat.filter(p=>p.subcategory===sub);
+      const withPhoto = inSub.find(p=>p.photos && p.photos[0]);
+      const photo = withPhoto ? withPhoto.photos[0] : null;
+      return `
+        <div class="catcard" onclick="selectSubcategory('${sub.replace(/'/g,"\\'")}')">
+          ${photo ? `<img src="${photo}" alt="${sub}"/>` : `<div style="aspect-ratio:1/1;background:var(--bg-deep);"></div>`}
+          <div class="catname">${sub}</div>
+          <div class="catcount">${inSub.length} item${inSub.length===1?'':'s'}</div>
+        </div>`;
+    }).join('');
+    if(hasUncategorized){
+      const inOther = inCat.filter(p=>!p.subcategory);
+      const withPhoto = inOther.find(p=>p.photos && p.photos[0]);
+      const photo = withPhoto ? withPhoto.photos[0] : null;
+      cards += `
+        <div class="catcard" onclick="selectSubcategory('__other__')">
+          ${photo ? `<img src="${photo}" alt="Other"/>` : `<div style="aspect-ratio:1/1;background:var(--bg-deep);"></div>`}
+          <div class="catname">Other</div>
+          <div class="catcount">${inOther.length} item${inOther.length===1?'':'s'}</div>
+        </div>`;
+    }
+    el.innerHTML = `
+      <button class="backlink" onclick="backToCategories()">← All categories</button>
+      <h2>${activeCategory} — choose a type</h2>
+      <div class="row">${cards}</div>`;
+    return;
+  }
+
+  // LEVEL 3: products — just a breadcrumb here, the grid does the rest
+  const subLabel = activeSubcategory==='__all__' ? '' : (activeSubcategory==='__other__' ? ' — Other' : ' — '+activeSubcategory);
+  el.innerHTML = `
+    <button class="backlink" onclick="backToSubcategories()">← ${activeCategory}</button>
+    <h2>${activeCategory}${subLabel}</h2>`;
+}
+
+function selectCategory(c){
+  activeCategory = c; activeSubcategory = '';
+  renderCategoryBrowse(); renderGrid();
+  document.getElementById('catBrowse').scrollIntoView({behavior:'smooth'});
+}
+function selectSubcategory(sub){
+  activeSubcategory = sub;
+  renderCategoryBrowse(); renderGrid();
+  document.getElementById('grid').scrollIntoView({behavior:'smooth'});
+}
+function backToCategories(){
+  activeCategory=''; activeSubcategory='';
+  renderCategoryBrowse(); renderGrid();
+}
+function backToSubcategories(){
+  activeSubcategory='';
+  renderCategoryBrowse(); renderGrid();
+}
+window.selectCategory = selectCategory;
+window.selectSubcategory = selectSubcategory;
+window.backToCategories = backToCategories;
+window.backToSubcategories = backToSubcategories;
 
 function renderGrid(){
   const grid = document.getElementById('grid');
   const search = document.getElementById('searchBox').value.trim().toLowerCase();
+  const atProductLevel = activeCategory && activeSubcategory;
+
+  if(!search && !atProductLevel){
+    grid.innerHTML = `<div class="empty">Choose a category above, or search for a product by name.</div>`;
+    return;
+  }
+
   let list = allProducts.filter(p=>{
-    if(activeCategory && p.category !== activeCategory) return false;
     if(search){
       const hay = (p.itemName+' '+p.category+' '+p.subcategory+' '+p.material).toLowerCase();
-      if(!hay.includes(search)) return false;
+      return hay.includes(search);
     }
+    if(activeCategory && p.category !== activeCategory) return false;
+    if(activeSubcategory==='__other__') return !p.subcategory;
+    if(activeSubcategory && activeSubcategory!=='__all__') return p.subcategory === activeSubcategory;
     return true;
   });
   if(!list.length){
     grid.innerHTML = `<div class="empty">No products found — try a different search or category.</div>`;
     return;
   }
-  grid.innerHTML = list.map(p=>{
-    const photo = (p.photos && p.photos[0]) ? p.photos[0] : null;
+  currentList = list;
+  grid.innerHTML = list.map((p,pIdx)=>{
+    const photos = p.photos && p.photos.length ? p.photos : [];
+    const photo = photos[0] || null;
     const metaLine1 = p.subcategory || p.category || '';
     const metaLine2 = [p.material, p.size].filter(Boolean).join(', ');
     const statusLabel = p.status || 'In Stock';
     return `
       <div class="tile">
-        ${photo
-          ? `<img class="photo" src="${photo}" alt="${p.itemName}" loading="lazy"/>`
-          : `<div class="noPhoto">Photo coming soon</div>`}
-        <span class="status ${statusClass(statusLabel)}">${statusLabel}</span>
+        <div class="photowrap">
+          ${photo
+            ? `<img class="photo" src="${photo}" alt="${p.itemName}" loading="lazy" onclick="openLightbox(${pIdx},0)"/>`
+            : `<div class="noPhoto">Photo coming soon</div>`}
+          ${photos.length>1 ? `<span class="photocount">📷 ${photos.length}</span>` : ''}
+          <span class="status ${statusClass(statusLabel)}">${statusLabel}</span>
+        </div>
         <div class="info">
           <div class="name">${p.itemName||'Unnamed product'}</div>
           <div class="meta">${metaLine1 ? `<span>${metaLine1}</span>` : ''}${metaLine2 ? `<span>${metaLine2}</span>` : ''}</div>
@@ -209,12 +529,13 @@ function renderGrid(){
 db.collection('catalog').get().then(snap=>{
   allProducts = snap.docs.map(d=>({id:d.id, ...d.data()})).filter(p=>p.itemName);
   allProducts.sort((a,b)=> (a.itemName||'').localeCompare(b.itemName||''));
-  renderCategoryPills();
+  renderShowcase();
+  renderCategoryBrowse();
   renderGrid();
 }).catch(err=>{
   console.error(err);
   document.getElementById('grid').innerHTML =
-    `<div class="empty">Could not load products right now. Please try again shortly, or contact us on WhatsApp.</div>`;
+    `<div class="empty">Could not load products.<br><br><b>Technical detail:</b> ${err.code||''} ${err.message||err}<br><br>If this says "permission-denied," the Firestore rules for the "catalog" collection likely need to be re-published.</div>`;
 });
 </script>
 </body>
