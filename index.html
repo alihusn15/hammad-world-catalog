@@ -169,10 +169,11 @@
     align-items:center;justify-content:center;
   }
   .lightbox.open{display:flex;}
-  .lightbox img{max-width:92vw;max-height:82vh;object-fit:contain;border-radius:4px;}
-  .lb-close{
-    position:absolute;top:16px;right:18px;background:none;border:none;color:var(--white);
-    font-size:32px;line-height:1;cursor:pointer;padding:4px 10px;
+  .lightbox img{max-width:92vw;max-height:82vh;object-fit:contain;border-radius:4px;touch-action:pan-y;}
+  .lb-back{
+    position:absolute;top:18px;left:18px;background:rgba(255,255,255,0.1);border:1px solid rgba(212,175,55,0.35);
+    color:var(--white);font-size:14px;font-weight:600;line-height:1;cursor:pointer;padding:9px 16px;
+    border-radius:8px;
   }
   .lb-nav{
     position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.12);
@@ -274,9 +275,9 @@
 </div>
 
 <div id="lightbox" class="lightbox" onclick="if(event.target===this) closeLightbox()">
-  <button class="lb-close" onclick="closeLightbox()">×</button>
+  <button class="lb-back" onclick="closeLightbox()">← Back</button>
   <button class="lb-nav lb-prev" onclick="lightboxNav(-1)">‹</button>
-  <img id="lightboxImg" src="" alt=""/>
+  <img id="lightboxImg" src="" alt="" ontouchstart="lbTouchStart(event)" ontouchend="lbTouchEnd(event)"/>
   <button class="lb-nav lb-next" onclick="lightboxNav(1)">›</button>
   <div class="lb-counter" id="lightboxCounter"></div>
 </div>
@@ -316,6 +317,19 @@ function closeLightbox(){
   document.getElementById('lightbox').classList.remove('open');
   lightboxProductIdx = null;
 }
+let lbTouchStartX = null;
+function lbTouchStart(e){ lbTouchStartX = e.changedTouches[0].clientX; }
+function lbTouchEnd(e){
+  if(lbTouchStartX===null) return;
+  const dx = e.changedTouches[0].clientX - lbTouchStartX;
+  const SWIPE_THRESHOLD = 40;
+  if(dx > SWIPE_THRESHOLD) lightboxNav(-1);       // swiped right → previous photo
+  else if(dx < -SWIPE_THRESHOLD) lightboxNav(1);  // swiped left → next photo
+  lbTouchStartX = null;
+}
+window.lbTouchStart = lbTouchStart;
+window.lbTouchEnd = lbTouchEnd;
+
 function lightboxNav(dir){
   const p = currentList[lightboxProductIdx];
   if(!p || !p.photos) return;
