@@ -44,6 +44,24 @@
   }
   h1,h2,h3,.brand{font-family:'Poppins',sans-serif;}
 
+  /* ---------- Top info bar: address & hours visible without any tapping ---------- */
+  .infobar{
+    background:var(--bg-deep);color:var(--ink-500);font-size:11.5px;
+    padding:7px 14px;text-align:center;line-height:1.5;
+  }
+  .infobar .sep{margin:0 8px;opacity:0.4;}
+
+  /* ---------- Brand bar ---------- */
+  .brandbar{
+    background:var(--bg-panel);border-bottom:1px solid var(--line);
+    padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  }
+  .brandbar-name{
+    font-family:'Poppins',sans-serif;font-size:19px;font-weight:800;
+    letter-spacing:0.4px;text-transform:uppercase;color:var(--ink);
+  }
+  .brandbar-motto{font-size:11.5px;color:var(--gold);margin-top:2px;}
+
   /* ---------- Hero ---------- */
   header.hero{
     background:linear-gradient(160deg, #0B2545 0%, #1B4F7A 55%, #0B2545 100%);
@@ -59,8 +77,6 @@
     pointer-events:none;
   }
   header.hero .inner{position:relative;max-width:640px;margin:0 auto;}
-  header.hero .brand{font-size:36px;font-weight:800;line-height:1.15;letter-spacing:0.2px;}
-  header.hero .motto{font-size:16px;font-weight:600;color:var(--gold);margin-top:8px;}
   header.hero .tagline{font-size:15.5px;opacity:0.9;margin-top:12px;line-height:1.5;}
   header.hero .contact{
     display:inline-block;margin-top:24px;
@@ -69,7 +85,6 @@
     padding:13px 32px;border-radius:8px;font-weight:800;font-size:15px;text-decoration:none;
     box-shadow:0 0 28px rgba(212,175,55,0.45), 0 4px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.5);
   }
-  @media (min-width:700px){ header.hero .brand{font-size:46px;} }
 
   /* ---------- Filter bar ---------- */
   .showcase{max-width:1280px;margin:0 auto;padding:34px 16px 0;}
@@ -104,7 +119,8 @@
     padding:14px 10px 4px;font-size:15px;font-weight:700;text-align:center;
     letter-spacing:0.3px;text-transform:uppercase;
   }
-  .catcard .catcount{padding:0 10px 14px;font-size:11.5px;color:var(--ink-500);text-align:center;}
+  .catcard .catdesc{padding:0 12px 6px;font-size:11.5px;color:var(--ink-500);text-align:center;line-height:1.5;}
+  .catcard .catcount{padding:0 10px 14px;font-size:11px;color:var(--gold);text-align:center;font-weight:600;}
   .backlink{
     background:none;border:none;color:var(--gold);font-size:13px;font-weight:600;cursor:pointer;
     padding:0 0 12px;
@@ -170,7 +186,19 @@
   }
 
   .empty{grid-column:1/-1;padding:60px 20px;text-align:center;color:var(--ink-500);}
-  footer{text-align:center;padding:24px 16px;color:var(--ink-500);font-size:12.5px;}
+  footer{
+    text-align:center;padding:32px 18px 40px;color:var(--ink-500);font-size:12.5px;
+    background:var(--bg-panel);border-top:1px solid var(--line);margin-top:20px;
+  }
+  .foot-name{font-family:'Poppins',sans-serif;font-size:17px;font-weight:800;color:var(--ink);letter-spacing:0.4px;text-transform:uppercase;}
+  .foot-motto{font-size:11.5px;color:var(--gold);margin-top:2px;margin-bottom:12px;}
+  .foot-line{line-height:1.6;margin-bottom:6px;}
+  .foot-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:16px 0 12px;}
+  .foot-actions a{
+    color:var(--ink);text-decoration:none;font-size:12.5px;font-weight:600;
+    border:1px solid var(--line);padding:9px 16px;border-radius:8px;
+  }
+  .foot-note{font-size:11.5px;opacity:0.75;}
 
   .tile .photo{cursor:zoom-in;}
 
@@ -199,9 +227,14 @@
 
   /* ---------- Hamburger menu ---------- */
   .menu-toggle{
-    position:absolute;top:18px;right:18px;background:rgba(255,255,255,0.1);border:1px solid rgba(212,175,55,0.35);
-    color:var(--white);font-size:20px;width:42px;height:42px;border-radius:8px;cursor:pointer;z-index:20;
+    flex:0 0 auto;background:rgba(255,255,255,0.06);border:1px solid rgba(212,175,55,0.35);
+    color:var(--ink);font-size:20px;width:42px;height:42px;border-radius:8px;cursor:pointer;
   }
+  header.hero .headline{
+    font-family:'Poppins',sans-serif;font-size:27px;font-weight:800;line-height:1.2;
+    margin:0;color:var(--white);
+  }
+  @media (min-width:700px){ header.hero .headline{font-size:36px;} }
   .menu-overlay{
     display:none;position:fixed;inset:0;background:rgba(8,4,15,0.7);z-index:90;
   }
@@ -240,13 +273,25 @@
 </head>
 <body>
 
-<header class="hero">
+<div class="infobar">
+  <span>📍 Kazir Bazar, Ratabari, Sribhumi, Assam</span>
+  <span class="sep">|</span>
+  <span>🕘 Open daily 9:30 AM – 8:30 PM</span>
+</div>
+
+<div class="brandbar">
+  <div>
+    <div class="brandbar-name">Hammad World</div>
+    <div class="brandbar-motto">Interior and Exterior Solution</div>
+  </div>
   <button class="menu-toggle" onclick="toggleMenu()" aria-label="Menu">☰</button>
+</div>
+
+<header class="hero">
   <div class="inner">
-    <div class="brand">Hammad World</div>
-    <div class="motto">Interior and Exterior Solution</div>
-    <div class="tagline">Tiles, sanitaryware and ceiling materials for finishing a space right — browse what's on our shelves right now, then message us for pricing.</div>
-    <a class="contact" id="topWhatsapp" href="#" target="_blank" rel="noopener">Chat on WhatsApp</a>
+    <h1 class="headline">Complete Interior &amp; Exterior Finishing</h1>
+    <div class="tagline">Tiles, sanitaryware and ceiling materials — browse what's on our shelves right now, then message us for pricing.</div>
+    <a class="contact" id="topWhatsapp" href="#" target="_blank" rel="noopener">Get price on WhatsApp</a>
   </div>
 </header>
 
@@ -293,7 +338,18 @@
   <div class="lb-counter" id="lightboxCounter"></div>
 </div>
 
-<footer>Prices on request — contact us on WhatsApp for the latest rates.</footer>
+<footer>
+  <div class="foot-name">Hammad World</div>
+  <div class="foot-motto">Interior and Exterior Solution</div>
+  <div class="foot-line">Kazir Bazar, Ratabari, West Side Of Kazir Bazar Jama Masjid,<br/>Dist. Sribhumi (Karimganj), Assam — 788735</div>
+  <div class="foot-line">Open daily 9:30 AM – 8:30 PM</div>
+  <div class="foot-actions">
+    <a id="footWhatsapp" href="#" target="_blank" rel="noopener">💬 WhatsApp</a>
+    <a id="footCall" href="#">📞 Call</a>
+    <a href="https://maps.app.goo.gl/tXprMeVhuYcXtPev8" target="_blank" rel="noopener">📍 Directions</a>
+  </div>
+  <div class="foot-note">Prices on request — message us for current rates and availability.</div>
+</footer>
 
 <script>
 /* ====================== SETTINGS — edit these two lines ====================== */
@@ -424,6 +480,8 @@ function waLink(productName){
 document.getElementById('topWhatsapp').href = waLink();
 document.getElementById('menuWhatsapp').href = waLink();
 document.getElementById('menuCall').href = 'tel:+'+SHOP_WHATSAPP_NUMBER;
+document.getElementById('footWhatsapp').href = waLink();
+document.getElementById('footCall').href = 'tel:+'+SHOP_WHATSAPP_NUMBER;
 
 function toggleMenu(){ document.getElementById('menuOverlay').classList.add('open'); }
 function closeMenu(){ document.getElementById('menuOverlay').classList.remove('open'); }
@@ -478,10 +536,15 @@ function renderCategoryBrowse(){
       const inCat = allProducts.filter(p=>p.category===c);
       const withPhoto = inCat.find(p=>p.photos && p.photos[0]);
       const photo = thumbOf(withPhoto,0);
+      // Describe the category using the subcategories actually present, rather
+      // than fixed marketing copy that could drift out of step with real stock.
+      const subs = Array.from(new Set(inCat.map(p=>p.subcategory).filter(Boolean)));
+      const desc = subs.length ? subs.slice(0,4).join(', ') + (subs.length>4 ? ' and more' : '') : '';
       return `
         <div class="catcard" onclick="selectCategory('${c.replace(/'/g,"\\'")}')">
           ${photo ? `<img src="${photo}" alt="${c}"/>` : `<div style="aspect-ratio:1/1;background:var(--bg-deep);"></div>`}
           <div class="catname">${c}</div>
+          ${desc ? `<div class="catdesc">${desc}</div>` : ''}
           <div class="catcount">${inCat.length} item${inCat.length===1?'':'s'}</div>
         </div>`;
     }).join('');
