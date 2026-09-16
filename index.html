@@ -83,14 +83,17 @@
 
   .catbrowse{max-width:1100px;margin:0 auto;padding:28px 16px 4px;}
   .catbrowse h2{font-size:18px;font-weight:700;margin:0 0 14px;color:var(--ink);}
-  .catbrowse .row{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;}
+  .catbrowse .row{display:grid;grid-template-columns:repeat(2, 1fr);gap:16px;}
   .catcard{
-    flex:0 0 auto;width:140px;cursor:pointer;background:var(--bg-panel);border:1.5px solid var(--line);
+    cursor:pointer;background:var(--bg-panel);border:1px solid var(--line);
     border-radius:10px;overflow:hidden;
   }
-  .catcard img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:var(--bg-deep);}
-  .catcard .catname{padding:9px 10px;font-size:13px;font-weight:700;}
-  .catcard .catcount{padding:0 10px 9px;font-size:11px;color:var(--ink-500);}
+  .catcard img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;background:var(--bg-deep);}
+  .catcard .catname{
+    padding:14px 10px 4px;font-size:15px;font-weight:700;text-align:center;
+    letter-spacing:0.3px;text-transform:uppercase;
+  }
+  .catcard .catcount{padding:0 10px 14px;font-size:11.5px;color:var(--ink-500);text-align:center;}
   .backlink{
     background:none;border:none;color:var(--gold);font-size:13px;font-weight:600;cursor:pointer;
     padding:0 0 12px;
@@ -215,7 +218,7 @@
     header.hero .tagline{font-size:17px;max-width:560px;margin-left:auto;margin-right:auto;}
     header.hero{padding:72px 20px 60px;}
     .tilegrid{grid-template-columns:repeat(auto-fill, minmax(210px, 1fr));}
-    .catcard{width:170px;}
+    .catbrowse .row{grid-template-columns:repeat(3, 1fr);}
   }
 
   @media (min-width:700px){
@@ -246,6 +249,9 @@
     <p>Kazir Bazar, Ratabari, West Side Of Kazir Bazar Jama Masjid,<br/>Dist. Sribhumi (Karimganj), Assam — 788735</p>
     <a class="menu-link" href="https://maps.app.goo.gl/tXprMeVhuYcXtPev8" target="_blank" rel="noopener">📍 Get Directions</a>
     <p class="menu-hours">Open daily: 9:30 AM – 8:30 PM</p>
+
+    <h3>Products</h3>
+    <div id="menuProductLinks"></div>
 
     <h3>Contact</h3>
     <a class="menu-link" id="menuWhatsapp" href="#" target="_blank" rel="noopener">💬 Chat on WhatsApp</a>
@@ -361,11 +367,20 @@ function statusClass(status){
   return 'comingsoon';
 }
 
+function renderMenuProductLinks(){
+  const el = document.getElementById('menuProductLinks');
+  const cats = Array.from(new Set(allProducts.map(p=>p.category).filter(Boolean)));
+  el.innerHTML = cats.map(c=>
+    `<a class="menu-link" href="javascript:void(0)" onclick="closeMenu();selectCategory('${c.replace(/'/g,"\\'")}')">${c}</a>`
+  ).join('');
+}
+
 function renderShowcase(){
   const el = document.getElementById('showcase');
   const cats = Array.from(new Set(allProducts.map(p=>p.category).filter(Boolean)));
   const frames = cats.map(c=>{
-    const withPhoto = allProducts.find(p=>p.category===c && p.photos && p.photos[0]);
+    const featured = allProducts.find(p=>p.category===c && p.featured && p.photos && p.photos[0]);
+    const withPhoto = featured || allProducts.find(p=>p.category===c && p.photos && p.photos[0]);
     if(!withPhoto) return '';
     const count = allProducts.filter(p=>p.category===c).length;
     return `
@@ -531,6 +546,7 @@ db.collection('catalog').get().then(snap=>{
   allProducts.sort((a,b)=> (a.itemName||'').localeCompare(b.itemName||''));
   renderShowcase();
   renderCategoryBrowse();
+  renderMenuProductLinks();
   renderGrid();
 }).catch(err=>{
   console.error(err);
