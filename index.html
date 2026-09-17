@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hammad World — Tiles, Sanitaryware &amp; Ceiling Materials</title>
 <meta name="theme-color" content="#0B2545">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B2545'/%3E%3Ctext x='32' y='43' font-family='Poppins,Arial,sans-serif' font-size='27' font-weight='800' fill='%23D4AF37' text-anchor='middle'%3EHW%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B2545'/%3E%3Ctext x='32' y='43' font-family='Poppins,Arial,sans-serif' font-size='27' font-weight='800' fill='%23D4AF37' text-anchor='middle'%3EHW%3C/text%3E%3C/svg%3E">
 <!-- Font CSS comes from googleapis, but the font FILES come from gstatic —
      without this second hint the browser pays a fresh DNS+TLS round trip
      before any text renders in the real typeface. -->
@@ -55,6 +57,14 @@
   .brandbar{
     background:var(--bg-panel);border-bottom:1px solid var(--line);
     padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  }
+  .brandbar-left{display:flex;align-items:center;gap:12px;}
+  .logomark{
+    flex:0 0 auto;width:42px;height:42px;border-radius:10px;
+    background:linear-gradient(160deg, #0B2545 0%, #1B4F7A 100%);
+    border:1px solid rgba(212,175,55,0.45);
+    color:var(--gold);font-family:'Poppins',sans-serif;font-weight:800;font-size:15px;
+    display:flex;align-items:center;justify-content:center;letter-spacing:0.5px;
   }
   .brandbar-name{
     font-family:'Poppins',sans-serif;font-size:19px;font-weight:800;
@@ -208,7 +218,19 @@
     align-items:center;justify-content:center;
   }
   .lightbox.open{display:flex;}
-  .lightbox img{max-width:92vw;max-height:82vh;object-fit:contain;border-radius:4px;touch-action:pan-y;}
+  .lightbox img{
+    max-width:92vw;max-height:82vh;object-fit:contain;border-radius:4px;
+    /* 'none' hands every touch to our own handlers — 'pan-y' silently disabled
+       pinch-zoom, which is why the photo opened but would not zoom. */
+    touch-action:none;
+    transform-origin:center center;
+    will-change:transform;
+  }
+  .lb-hint{
+    position:absolute;bottom:56px;left:50%;transform:translateX(-50%);
+    color:var(--ink-500);font-size:11.5px;background:rgba(255,255,255,0.08);
+    padding:4px 12px;border-radius:20px;white-space:nowrap;
+  }
   .lb-back{
     position:absolute;top:18px;left:18px;background:rgba(255,255,255,0.1);border:1px solid rgba(212,175,55,0.35);
     color:var(--white);font-size:14px;font-weight:600;line-height:1;cursor:pointer;padding:9px 16px;
@@ -280,9 +302,12 @@
 </div>
 
 <div class="brandbar">
-  <div>
-    <div class="brandbar-name">Hammad World</div>
-    <div class="brandbar-motto">Interior and Exterior Solution</div>
+  <div class="brandbar-left">
+    <div class="logomark" aria-hidden="true">HW</div>
+    <div>
+      <div class="brandbar-name">Hammad World</div>
+      <div class="brandbar-motto">Interior and Exterior Solution</div>
+    </div>
   </div>
   <button class="menu-toggle" onclick="toggleMenu()" aria-label="Menu">☰</button>
 </div>
@@ -333,7 +358,10 @@
 <div id="lightbox" class="lightbox" onclick="if(event.target===this) closeLightbox()">
   <button class="lb-back" onclick="closeLightbox()">← Back</button>
   <button class="lb-nav lb-prev" onclick="lightboxNav(-1)">‹</button>
-  <img id="lightboxImg" src="" alt="" ontouchstart="lbTouchStart(event)" ontouchend="lbTouchEnd(event)"/>
+  <img id="lightboxImg" src="" alt=""
+       ontouchstart="lbTouchStart(event)" ontouchmove="lbTouchMove(event)" ontouchend="lbTouchEnd(event)"
+       ondblclick="lbToggleZoom()"/>
+  <div class="lb-hint" id="lightboxHint"></div>
   <button class="lb-nav lb-next" onclick="lightboxNav(1)">›</button>
   <div class="lb-counter" id="lightboxCounter"></div>
 </div>
@@ -357,18 +385,6 @@ const SHOP_WHATSAPP_NUMBER = '916900281080'; // Your WhatsApp number
 const SHOP_NAME = 'Hammad World';
 /* ================================================================================ */
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDjqo-CjqSs4lSEnVTS9JuELAHCP2iFmVQ",
-  authDomain: "hammad-world.firebaseapp.com",
-  projectId: "hammad-world",
-  storageBucket: "hammad-world.firebasestorage.app",
-  messagingSenderId: "1022266009839",
-  appId: "1:1022266009839:web:4129f10f8856d36d25531a"
-};
-/* The public catalog is read-only and world-readable, so it's fetched directly
-   over HTTPS instead of loading the ~300KB Firebase SDK just to run one query.
-   Firestore's REST format wraps each value in a type tag, so unwrapValue()
-   converts a document back into a plain object. */
 /* Browsing views show images small, so they use the lightweight thumbnail.
    Photos uploaded before thumbnails existed have none — fall back to the full
    image so they still display rather than breaking. */
@@ -383,27 +399,6 @@ function fullOf(p, i){
   i = i||0;
   return (p.photos && p.photos[i]) ? p.photos[i] : (p.thumbs ? p.thumbs[i] : null);
 }
-function unwrapValue(v){
-  if(v==null) return null;
-  if('stringValue' in v) return v.stringValue;
-  if('booleanValue' in v) return v.booleanValue;
-  if('integerValue' in v) return Number(v.integerValue);
-  if('doubleValue' in v) return Number(v.doubleValue);
-  if('timestampValue' in v) return v.timestampValue;
-  if('nullValue' in v) return null;
-  if('arrayValue' in v) return (v.arrayValue.values||[]).map(unwrapValue);
-  if('mapValue' in v){
-    const out = {};
-    Object.entries(v.mapValue.fields||{}).forEach(([k,val])=> out[k]=unwrapValue(val));
-    return out;
-  }
-  return null;
-}
-function unwrapDoc(doc){
-  const out = {id: (doc.name||'').split('/').pop()};
-  Object.entries(doc.fields||{}).forEach(([k,v])=> out[k]=unwrapValue(v));
-  return out;
-}
 
 let allProducts = [];
 let activeCategory = '';
@@ -414,23 +409,111 @@ let lightboxPhotoIdx = 0;
 function openLightbox(productIdx, photoIdx){
   lightboxProductIdx = productIdx;
   lightboxPhotoIdx = photoIdx;
+  lbResetZoom();
   showLightboxImage();
   document.getElementById('lightbox').classList.add('open');
 }
 function closeLightbox(){
   document.getElementById('lightbox').classList.remove('open');
   lightboxProductIdx = null;
+  lbResetZoom();
 }
-let lbTouchStartX = null;
-function lbTouchStart(e){ lbTouchStartX = e.changedTouches[0].clientX; }
+/* Pinch-zoom, drag-to-pan, and swipe-between-photos share the same surface, so
+   the rules are: two fingers always zoom; one finger pans while zoomed in and
+   swipes to the next photo only at normal size. Double-tap toggles between
+   fit-to-screen and 2x. */
+let lbScale = 1, lbX = 0, lbY = 0;
+let lbStartDist = 0, lbStartScale = 1;
+let lbStartX = 0, lbStartY = 0, lbPanX = 0, lbPanY = 0;
+const LB_MAX_SCALE = 5, LB_MIN_SCALE = 1;
+
+function lbApply(){
+  const img = document.getElementById('lightboxImg');
+  if(img) img.style.transform = `translate(${lbX}px, ${lbY}px) scale(${lbScale})`;
+  const hint = document.getElementById('lightboxHint');
+  if(hint) hint.textContent = lbScale > 1.02 ? Math.round(lbScale*100)+'% — double-tap to reset' : '';
+}
+function lbResetZoom(){ lbScale = 1; lbX = 0; lbY = 0; lbApply(); }
+function lbToggleZoom(){
+  lbScale = lbScale > 1.02 ? 1 : 2;
+  lbX = 0; lbY = 0;
+  lbApply();
+}
+function lbDistance(t){
+  const dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY;
+  return Math.hypot(dx, dy);
+}
+/* Tracks whether the whole gesture used exactly one finger. A pinch fires
+   touchend once per finger, so without this a second finger lifting could be
+   read as a swipe using stale coordinates. */
+let lbGestureIsSingle = false;
+function lbTouchStart(e){
+  if(e.touches.length === 2){
+    lbGestureIsSingle = false;
+    lbStartDist = lbDistance(e.touches);
+    lbStartScale = lbScale;
+  } else if(e.touches.length === 1){
+    lbGestureIsSingle = true;
+    lbStartX = e.touches[0].clientX;
+    lbStartY = e.touches[0].clientY;
+    lbPanX = lbX; lbPanY = lbY;
+  }
+}
+function lbTouchMove(e){
+  if(e.touches.length === 2 && lbStartDist > 0){
+    e.preventDefault();
+    const ratio = lbDistance(e.touches) / lbStartDist;
+    lbScale = Math.min(LB_MAX_SCALE, Math.max(LB_MIN_SCALE, lbStartScale * ratio));
+    if(lbScale <= 1.02){ lbX = 0; lbY = 0; }
+    lbApply();
+  } else if(e.touches.length === 1 && lbScale > 1.02){
+    e.preventDefault();   // pan the zoomed photo instead of scrolling the page
+    lbX = lbPanX + (e.touches[0].clientX - lbStartX);
+    lbY = lbPanY + (e.touches[0].clientY - lbStartY);
+    lbApply();
+  }
+}
 function lbTouchEnd(e){
-  if(lbTouchStartX===null) return;
-  const dx = e.changedTouches[0].clientX - lbTouchStartX;
+  const wasSingle = lbGestureIsSingle;
+  if(e.touches.length === 0){ lbStartDist = 0; lbGestureIsSingle = false; }
+  if(!wasSingle) return;                // any part of this gesture used two fingers
+  if(lbScale > 1.02) return;            // zoomed in: one finger pans, never swipes
+  const dx = e.changedTouches[0].clientX - lbStartX;
+  const dy = e.changedTouches[0].clientY - lbStartY;
   const SWIPE_THRESHOLD = 40;
-  if(dx > SWIPE_THRESHOLD) lightboxNav(-1);       // swiped right → previous photo
-  else if(dx < -SWIPE_THRESHOLD) lightboxNav(1);  // swiped left → next photo
-  lbTouchStartX = null;
+  // Ignore mostly-vertical movement so a scroll gesture doesn't skip a photo.
+  if(Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)){
+    lightboxNav(dx > 0 ? -1 : 1);
+  }
 }
+window.lbTouchMove = lbTouchMove;
+window.lbToggleZoom = lbToggleZoom;
+
+/* Desktop has no pinch gesture, so the wheel zooms and a drag pans. */
+document.addEventListener('wheel', e=>{
+  const box = document.getElementById('lightbox');
+  if(!box || !box.classList.contains('open')) return;
+  e.preventDefault();
+  lbScale = Math.min(LB_MAX_SCALE, Math.max(LB_MIN_SCALE, lbScale * (e.deltaY < 0 ? 1.15 : 1/1.15)));
+  if(lbScale <= 1.02){ lbX = 0; lbY = 0; }
+  lbApply();
+}, {passive:false});
+
+let lbDragging = false, lbDragStartX = 0, lbDragStartY = 0;
+document.addEventListener('mousedown', e=>{
+  const img = document.getElementById('lightboxImg');
+  if(!img || e.target !== img || lbScale <= 1.02) return;
+  lbDragging = true; lbDragStartX = e.clientX; lbDragStartY = e.clientY;
+  lbPanX = lbX; lbPanY = lbY;
+  e.preventDefault();
+});
+document.addEventListener('mousemove', e=>{
+  if(!lbDragging) return;
+  lbX = lbPanX + (e.clientX - lbDragStartX);
+  lbY = lbPanY + (e.clientY - lbDragStartY);
+  lbApply();
+});
+document.addEventListener('mouseup', ()=>{ lbDragging = false; });
 window.lbTouchStart = lbTouchStart;
 window.lbTouchEnd = lbTouchEnd;
 
@@ -439,6 +522,7 @@ function lightboxNav(dir){
   if(!p || !p.photos) return;
   const n = p.photos.length;
   lightboxPhotoIdx = (lightboxPhotoIdx + dir + n) % n;
+  lbResetZoom();   // a new photo should always start at fit-to-screen
   showLightboxImage();
 }
 function showLightboxImage(){
@@ -687,31 +771,28 @@ function renderGrid(){
   }).join('');
 }
 
-/* The catalog is published as one small index plus one document per category,
-   so opening the site costs a single read and a category costs one more —
-   instead of one read per product, which capped the site at a few hundred
-   visitors a day once the catalog grew. Category data is fetched only when
-   someone opens that category, and kept once fetched. */
-let catalogIndex = null;      // { categories:[{category,slug,count,pages,cover,subs}], photoBase }
-const loadedCategories = {};  // slug -> product array, so a category is fetched at most once
+/* ===================== CATALOG SETTINGS =====================
+   ⚠️ WHEN YOUR CUSTOM DOMAIN IS READY: change CATALOG_BASE below to it,
+   e.g. 'https://photos.hammadworld.com/'. Change the matching line in the
+   Hammad World app, republish the catalog, done.
 
-function fsDocUrl(collection, docId){
-  return `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${collection}/${docId}?key=${firebaseConfig.apiKey}`;
-}
-async function fetchDoc(collection, docId){
-  const resp = await fetch(fsDocUrl(collection, docId));
-  if(!resp.ok) throw new Error('HTTP '+resp.status+' — '+(await resp.text()).slice(0,200));
-  return unwrapDoc(await resp.json());
-}
+   The catalog is read as plain files from R2, not from a database. A database
+   free tier caps reads per DAY, which breaks exactly when a post goes viral
+   and a month of visitors arrive in an hour. Files in R2 have no daily quota,
+   and once served through a custom domain they are cached at Cloudflare's
+   edge, so a spike is absorbed by the CDN. */
+const CATALOG_BASE = 'https://pub-ce2a5311865c4b9bbe03bb9309ba0a29.r2.dev/';
 
-/* Photo paths are stored bare; the domain is rebuilt here. */
+let catalogIndex = null;
+const loadedCategories = {};
+let allCategoriesLoaded = false;
+
 function photoUrl(path){
   if(!path) return null;
-  if(path.startsWith('http')) return path;              // tolerate older full URLs
-  const base = (catalogIndex && catalogIndex.photoBase) || '';
+  if(path.startsWith('http')) return path;               // tolerate older full URLs
+  const base = (catalogIndex && catalogIndex.photoBase) || CATALOG_BASE;
   return base + path;
 }
-/* Expand a stored catalog entry into the shape the rest of the page expects. */
 function expandEntry(e, categoryName){
   return {
     id: e.sku,
@@ -727,6 +808,14 @@ function expandEntry(e, categoryName){
   };
 }
 
+async function fetchCatalogFile(name, version){
+  // The version stamp busts any cached copy the moment a new catalog is published.
+  const url = CATALOG_BASE + 'catalog/' + name + (version ? '?v='+version : '');
+  const resp = await fetch(url);
+  if(!resp.ok) throw new Error('HTTP '+resp.status+' fetching '+name);
+  return await resp.json();
+}
+
 async function loadCategory(categoryName){
   const meta = (catalogIndex.categories||[]).find(x=>x.category===categoryName);
   if(!meta) return [];
@@ -734,20 +823,16 @@ async function loadCategory(categoryName){
   const pages = Math.max(1, Number(meta.pages)||1);
   let items = [];
   for(let i=0;i<pages;i++){
-    const doc = await fetchDoc('catalogPages', meta.slug+'-'+i);
+    const doc = await fetchCatalogFile(meta.slug+'-'+i+'.json', catalogIndex.v);
     items = items.concat((doc.items||[]).map(e=>expandEntry(e, categoryName)));
   }
   items.sort((a,b)=> (a.itemName||'').localeCompare(b.itemName||''));
   loadedCategories[meta.slug] = items;
-  // Keep the flat list the search and grid use in step with what's loaded.
   const existing = new Set(allProducts.map(p=>p.id));
   items.forEach(p=>{ if(!existing.has(p.id)) allProducts.push(p); });
   return items;
 }
 
-/* Search needs everything, so the first search pulls any category not yet
-   fetched — one read per remaining category, once per visit. */
-let allCategoriesLoaded = false;
 async function ensureAllCategories(){
   if(allCategoriesLoaded || !catalogIndex) return;
   for(const meta of (catalogIndex.categories||[])){
@@ -758,7 +843,8 @@ async function ensureAllCategories(){
 
 async function loadCatalog(){
   try{
-    catalogIndex = await fetchDoc('catalogIndex', 'index');
+    // Cache-bust the index itself so a republish shows up without a hard refresh.
+    catalogIndex = await fetchCatalogFile('index.json', Date.now());
     if(!catalogIndex || !catalogIndex.categories || !catalogIndex.categories.length){
       document.getElementById('grid').innerHTML =
         `<div class="empty">No products published yet. In the app: Dashboard → "Sync catalog to public site now".</div>`;
@@ -773,7 +859,7 @@ async function loadCatalog(){
     const notFound = String(err.message||'').includes('404');
     document.getElementById('grid').innerHTML = notFound
       ? `<div class="empty">No products published yet. In the app: Dashboard → "Sync catalog to public site now".</div>`
-      : `<div class="empty">Could not load products.<br><br><b>Technical detail:</b> ${err.message||err}<br><br>If this mentions permission, the Firestore rules need re-publishing.</div>`;
+      : `<div class="empty">Could not load products.<br><br><b>Technical detail:</b> ${err.message||err}</div>`;
   }
 }
 loadCatalog();
