@@ -321,7 +321,7 @@
 <section class="catbrowse" id="catBrowse"></section>
 
 <div class="filterbar">
-  <input type="search" id="searchBox" placeholder="Search by product name or category..." oninput="renderGrid()"/>
+  <input type="search" id="searchBox" placeholder="Search by product name or category..." oninput="onSearchInput()"/>
 </div>
 
 <div class="gridwrap">
@@ -497,68 +497,59 @@ function statusClass(status){
 
 function renderMenuProductLinks(){
   const el = document.getElementById('menuProductLinks');
-  const cats = Array.from(new Set(allProducts.map(p=>p.category).filter(Boolean)));
+  const cats = (catalogIndex && catalogIndex.categories) ? catalogIndex.categories.map(m=>m.category) : [];
   el.innerHTML = cats.map(c=>
-    `<a class="menu-link" href="javascript:void(0)" onclick="closeMenu();selectCategory('${c.replace(/'/g,"\\'")}')">${c}</a>`
+    `<a class="menu-link" href="javascript:void(0)" onclick="closeMenu();selectCategory('${String(c).replace(/'/g,"\\'")}')">${c}</a>`
   ).join('');
 }
 
 function renderShowcase(){
   const el = document.getElementById('showcase');
-  const cats = Array.from(new Set(allProducts.map(p=>p.category).filter(Boolean)));
-  const frames = cats.map(c=>{
-    const featured = allProducts.find(p=>p.category===c && p.featured && p.photos && p.photos[0]);
-    const withPhoto = featured || allProducts.find(p=>p.category===c && p.photos && p.photos[0]);
-    if(!withPhoto) return '';
-    const count = allProducts.filter(p=>p.category===c).length;
+  if(!catalogIndex){ el.innerHTML=''; return; }
+  const frames = (catalogIndex.categories||[]).map(meta=>{
+    const cover = photoUrl(meta.cover);
+    if(!cover) return '';
     return `
-      <div class="frame" onclick="selectCategory('${c.replace(/'/g,"\\'")}')" style="cursor:pointer;">
-        <img src="${thumbOf(withPhoto,0)}" alt="${c}"/>
+      <div class="frame" onclick="selectCategory('${String(meta.category).replace(/'/g,"\\'")}')" style="cursor:pointer;">
+        <img src="${cover}" alt="${meta.category}"/>
         <div class="caption">
-          <div class="catlabel">${c}</div>
-          <div class="catsub">${count} product${count===1?'':'s'} available</div>
+          <div class="catlabel">${meta.category}</div>
+          <div class="catsub">${meta.count} product${meta.count===1?'':'s'} available</div>
         </div>
       </div>`;
   }).filter(Boolean);
   el.innerHTML = frames.length ? `<div class="row">${frames.join('')}</div>` : '';
 }
 
-let activeSubcategory = '';
-
 function renderCategoryBrowse(){
   const el = document.getElementById('catBrowse');
+  if(!catalogIndex) { el.innerHTML=''; return; }
 
-  // LEVEL 1: top categories
+  // LEVEL 1: categories — straight from the index, no product data needed
   if(!activeCategory){
-    const cats = Array.from(new Set(allProducts.map(p=>p.category).filter(Boolean)));
-    if(!cats.length){ el.innerHTML=''; return; }
-    const cards = cats.map(c=>{
-      const inCat = allProducts.filter(p=>p.category===c);
-      const withPhoto = inCat.find(p=>p.photos && p.photos[0]);
-      const photo = thumbOf(withPhoto,0);
-      // Describe the category using the subcategories actually present, rather
-      // than fixed marketing copy that could drift out of step with real stock.
-      const subs = Array.from(new Set(inCat.map(p=>p.subcategory).filter(Boolean)));
+    const cards = (catalogIndex.categories||[]).map(meta=>{
+      const cover = photoUrl(meta.cover);
+      const subs = meta.subs||[];
       const desc = subs.length ? subs.slice(0,4).join(', ') + (subs.length>4 ? ' and more' : '') : '';
       return `
-        <div class="catcard" onclick="selectCategory('${c.replace(/'/g,"\\'")}')">
-          ${photo ? `<img src="${photo}" alt="${c}"/>` : `<div style="aspect-ratio:1/1;background:var(--bg-deep);"></div>`}
-          <div class="catname">${c}</div>
+        <div class="catcard" onclick="selectCategory('${String(meta.category).replace(/'/g,"\\'")}')">
+          ${cover ? `<img src="${cover}" alt="${meta.category}"/>` : `<div style="aspect-ratio:4/5;background:var(--bg-deep);"></div>`}
+          <div class="catname">${meta.category}</div>
           ${desc ? `<div class="catdesc">${desc}</div>` : ''}
-          <div class="catcount">${inCat.length} item${inCat.length===1?'':'s'}</div>
+          <div class="catcount">${meta.count} item${meta.count===1?'':'s'}</div>
         </div>`;
     }).join('');
-    el.innerHTML = `<h2>Browse by category</h2><div class="row">${cards}</div>`;
+    el.innerHTML = cards ? `<h2>Browse by category</h2><div class="row">${cards}</div>` : '';
     return;
   }
 
-  const inCat = allProducts.filter(p=>p.category===activeCategory);
+  const meta = (catalogIndex.categories||[]).find(x=>x.category===activeCategory);
+  const inCat = (meta && loadedCategories[meta.slug]) || [];
 
   // LEVEL 2: subcategories within the chosen category
   if(!activeSubcategory){
     const subs = Array.from(new Set(inCat.map(p=>p.subcategory).filter(Boolean)));
     if(!subs.length){
-      // Nothing to drill into — go straight to products for this category.
       activeSubcategory = '__all__';
       renderGrid();
       el.innerHTML = `<button class="backlink" onclick="backToCategories()">← All categories</button><h2>${activeCategory}</h2>`;
@@ -567,22 +558,20 @@ function renderCategoryBrowse(){
     const hasUncategorized = inCat.some(p=>!p.subcategory);
     let cards = subs.map(sub=>{
       const inSub = inCat.filter(p=>p.subcategory===sub);
-      const withPhoto = inSub.find(p=>p.photos && p.photos[0]);
-      const photo = thumbOf(withPhoto,0);
+      const photo = thumbOf(inSub.find(p=>(p.thumbs&&p.thumbs[0])||(p.photos&&p.photos[0])),0);
       return `
         <div class="catcard" onclick="selectSubcategory('${sub.replace(/'/g,"\\'")}')">
-          ${photo ? `<img src="${photo}" alt="${sub}"/>` : `<div style="aspect-ratio:1/1;background:var(--bg-deep);"></div>`}
+          ${photo ? `<img src="${photo}" alt="${sub}"/>` : `<div style="aspect-ratio:4/5;background:var(--bg-deep);"></div>`}
           <div class="catname">${sub}</div>
           <div class="catcount">${inSub.length} item${inSub.length===1?'':'s'}</div>
         </div>`;
     }).join('');
     if(hasUncategorized){
       const inOther = inCat.filter(p=>!p.subcategory);
-      const withPhoto = inOther.find(p=>p.photos && p.photos[0]);
-      const photo = thumbOf(withPhoto,0);
+      const photo = thumbOf(inOther.find(p=>(p.thumbs&&p.thumbs[0])||(p.photos&&p.photos[0])),0);
       cards += `
         <div class="catcard" onclick="selectSubcategory('__other__')">
-          ${photo ? `<img src="${photo}" alt="Other"/>` : `<div style="aspect-ratio:1/1;background:var(--bg-deep);"></div>`}
+          ${photo ? `<img src="${photo}" alt="Other"/>` : `<div style="aspect-ratio:4/5;background:var(--bg-deep);"></div>`}
           <div class="catname">Other</div>
           <div class="catcount">${inOther.length} item${inOther.length===1?'':'s'}</div>
         </div>`;
@@ -594,17 +583,25 @@ function renderCategoryBrowse(){
     return;
   }
 
-  // LEVEL 3: products — just a breadcrumb here, the grid does the rest
+  // LEVEL 3: products — breadcrumb only, the grid does the rest
   const subLabel = activeSubcategory==='__all__' ? '' : (activeSubcategory==='__other__' ? ' — Other' : ' — '+activeSubcategory);
   el.innerHTML = `
     <button class="backlink" onclick="backToSubcategories()">← ${activeCategory}</button>
     <h2>${activeCategory}${subLabel}</h2>`;
 }
 
-function selectCategory(c){
+async function selectCategory(c){
   activeCategory = c; activeSubcategory = '';
-  renderCategoryBrowse(); renderGrid();
+  // Show a loading state straight away, since this may need a fetch.
+  document.getElementById('grid').innerHTML = `<div class="empty">Loading ${c}...</div>`;
   document.getElementById('catBrowse').scrollIntoView({behavior:'smooth'});
+  try{ await loadCategory(c); }
+  catch(e){
+    console.error(e);
+    document.getElementById('grid').innerHTML = `<div class="empty">Could not load ${c}. Please try again.</div>`;
+    return;
+  }
+  renderCategoryBrowse(); renderGrid();
 }
 function selectSubcategory(sub){
   activeSubcategory = sub;
@@ -623,6 +620,22 @@ window.selectCategory = selectCategory;
 window.selectSubcategory = selectSubcategory;
 window.backToCategories = backToCategories;
 window.backToSubcategories = backToSubcategories;
+
+/* Searching spans every category, so the first keystroke pulls in any category
+   not yet fetched — one read each, once per visit. Debounced so typing doesn't
+   fire a burst of requests. */
+let searchTimer = null;
+function onSearchInput(){
+  renderGrid();  // respond immediately with whatever is already loaded
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(async ()=>{
+    const q = document.getElementById('searchBox').value.trim();
+    if(!q || allCategoriesLoaded) return;
+    try{ await ensureAllCategories(); renderGrid(); }
+    catch(e){ console.error(e); }
+  }, 350);
+}
+window.onSearchInput = onSearchInput;
 
 function renderGrid(){
   const grid = document.getElementById('grid');
@@ -674,32 +687,93 @@ function renderGrid(){
   }).join('');
 }
 
-async function loadCatalog(){
-  const base = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/catalog`;
-  let docs = [], pageToken = '';
-  try{
-    // Firestore returns at most a few hundred documents per response, so follow
-    // the page tokens until everything is in — otherwise a growing catalog would
-    // silently stop showing its newest products.
-    do {
-      const url = base + `?pageSize=300&key=${firebaseConfig.apiKey}` + (pageToken?`&pageToken=${pageToken}`:'');
-      const resp = await fetch(url);
-      if(!resp.ok) throw new Error('HTTP '+resp.status+' — '+(await resp.text()).slice(0,200));
-      const data = await resp.json();
-      docs = docs.concat(data.documents||[]);
-      pageToken = data.nextPageToken||'';
-    } while(pageToken);
+/* The catalog is published as one small index plus one document per category,
+   so opening the site costs a single read and a category costs one more —
+   instead of one read per product, which capped the site at a few hundred
+   visitors a day once the catalog grew. Category data is fetched only when
+   someone opens that category, and kept once fetched. */
+let catalogIndex = null;      // { categories:[{category,slug,count,pages,cover,subs}], photoBase }
+const loadedCategories = {};  // slug -> product array, so a category is fetched at most once
 
-    allProducts = docs.map(unwrapDoc).filter(p=>p.itemName);
-    allProducts.sort((a,b)=> (a.itemName||'').localeCompare(b.itemName||''));
+function fsDocUrl(collection, docId){
+  return `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${collection}/${docId}?key=${firebaseConfig.apiKey}`;
+}
+async function fetchDoc(collection, docId){
+  const resp = await fetch(fsDocUrl(collection, docId));
+  if(!resp.ok) throw new Error('HTTP '+resp.status+' — '+(await resp.text()).slice(0,200));
+  return unwrapDoc(await resp.json());
+}
+
+/* Photo paths are stored bare; the domain is rebuilt here. */
+function photoUrl(path){
+  if(!path) return null;
+  if(path.startsWith('http')) return path;              // tolerate older full URLs
+  const base = (catalogIndex && catalogIndex.photoBase) || '';
+  return base + path;
+}
+/* Expand a stored catalog entry into the shape the rest of the page expects. */
+function expandEntry(e, categoryName){
+  return {
+    id: e.sku,
+    itemName: e.n || '',
+    category: categoryName,
+    subcategory: e.sub || '',
+    material: e.m || '',
+    size: e.sz || '',
+    status: e.st || 'In Stock',
+    featured: !!e.f,
+    photos: (e.p||[]).map(photoUrl).filter(Boolean),
+    thumbs: (e.t||[]).map(photoUrl).filter(Boolean)
+  };
+}
+
+async function loadCategory(categoryName){
+  const meta = (catalogIndex.categories||[]).find(x=>x.category===categoryName);
+  if(!meta) return [];
+  if(loadedCategories[meta.slug]) return loadedCategories[meta.slug];
+  const pages = Math.max(1, Number(meta.pages)||1);
+  let items = [];
+  for(let i=0;i<pages;i++){
+    const doc = await fetchDoc('catalogPages', meta.slug+'-'+i);
+    items = items.concat((doc.items||[]).map(e=>expandEntry(e, categoryName)));
+  }
+  items.sort((a,b)=> (a.itemName||'').localeCompare(b.itemName||''));
+  loadedCategories[meta.slug] = items;
+  // Keep the flat list the search and grid use in step with what's loaded.
+  const existing = new Set(allProducts.map(p=>p.id));
+  items.forEach(p=>{ if(!existing.has(p.id)) allProducts.push(p); });
+  return items;
+}
+
+/* Search needs everything, so the first search pulls any category not yet
+   fetched — one read per remaining category, once per visit. */
+let allCategoriesLoaded = false;
+async function ensureAllCategories(){
+  if(allCategoriesLoaded || !catalogIndex) return;
+  for(const meta of (catalogIndex.categories||[])){
+    if(!loadedCategories[meta.slug]) await loadCategory(meta.category);
+  }
+  allCategoriesLoaded = true;
+}
+
+async function loadCatalog(){
+  try{
+    catalogIndex = await fetchDoc('catalogIndex', 'index');
+    if(!catalogIndex || !catalogIndex.categories || !catalogIndex.categories.length){
+      document.getElementById('grid').innerHTML =
+        `<div class="empty">No products published yet. In the app: Dashboard → "Sync catalog to public site now".</div>`;
+      return;
+    }
     renderShowcase();
     renderCategoryBrowse();
     renderMenuProductLinks();
     renderGrid();
   }catch(err){
     console.error(err);
-    document.getElementById('grid').innerHTML =
-      `<div class="empty">Could not load products.<br><br><b>Technical detail:</b> ${err.message||err}<br><br>If this mentions permission, the Firestore rules for the "catalog" collection likely need to be re-published.</div>`;
+    const notFound = String(err.message||'').includes('404');
+    document.getElementById('grid').innerHTML = notFound
+      ? `<div class="empty">No products published yet. In the app: Dashboard → "Sync catalog to public site now".</div>`
+      : `<div class="empty">Could not load products.<br><br><b>Technical detail:</b> ${err.message||err}<br><br>If this mentions permission, the Firestore rules need re-publishing.</div>`;
   }
 }
 loadCatalog();
