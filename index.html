@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <!-- Product photos all come from R2; warming that connection early means the
      first image starts downloading sooner instead of after a cold handshake. -->
-<link rel="preconnect" href="https://pub-ce2a5311865c4b9bbe03bb9309ba0a29.r2.dev" crossorigin>
+<link rel="preconnect" href="https://hammad-world-photo-upload.hammadworld25.workers.dev" crossorigin>
 <style>
   :root{
     --bg:#150B24;
@@ -546,9 +546,9 @@ header.hero .contact span{font-size:26px;line-height:1}
 /* HAMMAD WORLD catalogue v2. Public, read-only, compatible with the companion
    worker's compact JSON and immutable versions/<version>/category-N pages.
    Configure the same public bucket base in the worker and management app.
-   r2.dev is retained for testing; use an R2 custom domain for production. */
+   Public files are served by the production Worker using its R2 binding. */
 const SHOP_WHATSAPP_NUMBER = '916900281080';
-const CATALOG_BASE = 'https://pub-ce2a5311865c4b9bbe03bb9309ba0a29.r2.dev/';
+const CATALOG_BASE = 'https://hammad-world-photo-upload.hammadworld25.workers.dev/';
 const PAGE_SIZE = 48; // Display size only: every matching product is reachable.
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -578,6 +578,7 @@ function routeURL(state){
 function photoUrl(path){
   if(typeof path !== 'string' || !path.trim()) return '';
   try{const u = new URL(path,(catalogIndex && catalogIndex.photoBase) || CATALOG_BASE);
+    if(/^pub-[a-f0-9]+\.r2\.dev$/.test(u.hostname)){const production=new URL(CATALOG_BASE);u.hostname=production.hostname;}
     return u.protocol==='https:' && !u.username && !u.password ? u.href : '';
   }catch{return '';}
 }
@@ -942,3 +943,4 @@ loadCatalog();
 </script>
 </body>
 </html>
+
