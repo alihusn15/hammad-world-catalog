@@ -946,7 +946,7 @@ loadCatalog();
 #hwPrivacy[hidden]{display:none!important} #hwPrivacy button,#hwPrivacySettings{cursor:pointer;padding:10px 14px;border:1px solid #d4af37;border-radius:8px;background:#201335;color:#fff;font:inherit} #hwPrivacyAccept{background:#d4af37!important;color:#161020!important} #hwPrivacySettings{margin-top:12px} #hwPrivacyActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 </style>
 <section id="hwPrivacy" aria-label="Analytics privacy preferences" hidden>
-<strong>Your privacy choices</strong><p>With your permission, Google Analytics and Microsoft Clarity help us understand visits, product interests, clicks and browsing behaviour, including masked session recordings. You can reject optional analytics and still browse the entire catalogue. Change your choice anytime using Privacy settings in the footer.</p>
+<strong>Your privacy choices</strong><p>With your permission, Google Analytics and Microsoft Clarity help us understand visits, product interests, clicks and browsing behaviour, including masked session recordings. You can reject optional analytics and still browse the entire catalogue. Separately, we count catalogue page loads regardless of your optional analytics choice. Our Cloudflare counter stores daily totals only, without tracking cookies or visitor identifiers in its database. Cloudflare processes your IP address for rate limiting. These totals do not represent unique visitors. Change your choice anytime using Privacy settings in the footer.</p>
 <div id="hwPrivacyActions"><button type="button" id="hwPrivacyAccept">Accept analytics</button><button type="button" id="hwPrivacyReject">Reject analytics</button></div>
 </section>
 <script>
@@ -975,6 +975,28 @@ document.getElementById('searchBox').addEventListener('input',()=>{clearTimeout(
 document.addEventListener('click',e=>{const a=e.target.closest('a[href]');if(!a)return;try{const u=new URL(a.href);if(u.protocol==='tel:')event('call_click');else if(u.hostname==='wa.me'||u.hostname==='api.whatsapp.com')event('whatsapp_click');}catch(e){}},true);
 const observer=new MutationObserver(view);observer.observe(document.getElementById('grid'),{childList:true});observer.observe(document.getElementById('catBrowse'),{childList:true});
 if(choice==='accept')start();else if(choice!=='reject')panel.hidden=false;
+})();
+</script>
+
+<script>
+// Independent aggregate page-load counter; no optional analytics identifiers.
+(()=>{
+  'use strict';
+  if (!['https://hammadworld.in','https://www.hammadworld.in'].includes(location.origin)) return;
+  let sent=false;
+  function count(){
+    if(sent || document.prerendering || document.visibilityState !== 'visible') return;
+    sent=true;
+    document.removeEventListener('visibilitychange',count);
+    document.removeEventListener('prerenderingchange',count);
+    fetch('https://hammad-world-analytics.hammadworld25.workers.dev/visit',{
+      method:'POST', mode:'cors', credentials:'omit',
+      referrerPolicy:'no-referrer', keepalive:true
+    }).catch(()=>{});
+  }
+  document.addEventListener('visibilitychange',count);
+  document.addEventListener('prerenderingchange',count);
+  count();
 })();
 </script>
 
