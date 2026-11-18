@@ -946,7 +946,7 @@ loadCatalog();
 #hwPrivacy[hidden]{display:none!important} #hwPrivacy button,#hwPrivacySettings{cursor:pointer;padding:10px 14px;border:1px solid #d4af37;border-radius:8px;background:#201335;color:#fff;font:inherit} #hwPrivacyAccept{background:#d4af37!important;color:#161020!important} #hwPrivacySettings{margin-top:12px} #hwPrivacyActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 </style>
 <section id="hwPrivacy" aria-label="Analytics privacy preferences" hidden>
-<strong>Your privacy choices</strong><p>With your permission, Google Analytics and Microsoft Clarity help us understand visits, product interests, clicks and browsing behaviour, including masked session recordings. You can reject optional analytics and still browse the entire catalogue. Separately, we count catalogue page loads regardless of your optional analytics choice. Our Cloudflare counter stores daily totals only, without tracking cookies or visitor identifiers in its database. Cloudflare processes your IP address for rate limiting. These totals do not represent unique visitors. Change your choice anytime using Privacy settings in the footer.</p>
+<strong>Your privacy choices</strong><p>With your permission, Google Analytics and Microsoft Clarity help us understand visits, product interests, clicks and browsing behaviour, including masked session recordings. You can reject optional analytics and still browse the entire catalogue. Separately, we count catalogue page loads regardless of your optional analytics choice. Our Cloudflare counter stores daily totals only, without tracking cookies or visitor identifiers in its database. Cloudflare processes your IP address for rate limiting. These totals do not represent unique visitors. Change your choice anytime using Privacy settings in the footer. If you voluntarily submit a customer enquiry, HAMMAD WORLD stores your name, mobile number, location, product interests, requirements and contact consent in a private Cloudflare database for responding and follow-up. This is separate from optional analytics. Contact us using the website contact details to request correction or deletion.</p>
 <div id="hwPrivacyActions"><button type="button" id="hwPrivacyAccept">Accept analytics</button><button type="button" id="hwPrivacyReject">Reject analytics</button></div>
 </section>
 <script>
@@ -998,6 +998,42 @@ if(choice==='accept')start();else if(choice!=='reject')panel.hidden=false;
   document.addEventListener('prerenderingchange',count);
   count();
 })();
+</script>
+
+<style>
+#hwLeadOpen{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:70;background:#815512;color:white;border:1px solid #e0c69b;border-radius:28px;padding:13px 22px;min-height:48px;font-weight:700;box-shadow:0 4px 18px #0003}
+body:has(#hwPrivacy:not([hidden])) #hwLeadOpen,body:has(.menu-overlay.open) #hwLeadOpen,body:has(.lightbox.open) #hwLeadOpen{visibility:hidden}
+footer{padding-bottom:100px!important}
+#hwLeadDialog{width:min(94vw,480px);max-height:88vh;max-height:88dvh;overflow:auto;border:1px solid #dfc990;border-radius:16px;background:#fffdf8;color:#28231b;padding:22px;box-shadow:0 12px 48px #0005}
+#hwLeadDialog::backdrop{background:#161612a8}#hwLeadDialog h2{margin:0 40px 6px 0;font-size:26px}#hwLeadClose{float:right;border:1px solid #dfc990;border-radius:8px;background:transparent;min-width:44px;min-height:44px;font-size:24px}#hwLeadForm label{display:block;margin:12px 0 4px;font-size:14px}#hwLeadForm input:not([type=checkbox]),#hwLeadForm textarea{width:100%;padding:10px;border:1px solid #b9ad95;border-radius:6px;background:white;color:#28231b;font:16px system-ui;min-height:44px}#hwLeadForm fieldset{border:1px solid #dfc990;border-radius:8px;margin:16px 0;padding:8px 12px}#hwLeadForm fieldset label,#hwLeadForm .hw-consent{display:flex;align-items:flex-start;gap:8px}#hwLeadForm input[type=checkbox]{width:19px;height:19px;flex:none}#hwLeadSubmit{width:100%;background:#815512;color:white;border:0;border-radius:8px;padding:14px;font-weight:700;margin-top:12px}#hwLeadMessage{overflow-wrap:anywhere;font-size:14px}#hwLeadDialog p{font-size:14px}#hwLeadForm .hw-trap{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+</style>
+<button id="hwLeadOpen" type="button" aria-haspopup="dialog">Enquire Now</button>
+<dialog id="hwLeadDialog" aria-labelledby="hwLeadTitle" data-clarity-mask="true" data-clarity-region="customer-enquiry">
+<button id="hwLeadClose" type="button" aria-label="Close enquiry">×</button>
+<h2 id="hwLeadTitle">Customer enquiry</h2><p>Tell us what you need. Our team will contact you.</p>
+<form id="hwLeadForm" autocomplete="off" data-clarity-mask="true">
+<label for="hwName">Full name *</label><input id="hwName" name="customer_name" autocomplete="name" required minlength="2" maxlength="100" data-clarity-mask="true">
+<label for="hwMobile">Mobile / WhatsApp number *</label><input id="hwMobile" name="mobile" type="tel" autocomplete="tel" required maxlength="20" placeholder="10-digit Indian mobile number" data-clarity-mask="true">
+<label for="hwLocation">Village / Town / District *</label><input id="hwLocation" name="location" required minlength="2" maxlength="150" data-clarity-mask="true">
+<fieldset><legend>Interested in (select at least one) *</legend>
+<label><input type="checkbox" name="interests" value="Tiles">Tiles</label><label><input type="checkbox" name="interests" value="Sanitaryware">Sanitaryware</label><label><input type="checkbox" name="interests" value="PVC ceiling">PVC ceiling</label><label><input type="checkbox" name="interests" value="Gypsum / POP ceiling">Gypsum / POP ceiling</label><label><input type="checkbox" name="interests" value="WPC &amp; wall panels">WPC &amp; wall panels</label><label><input type="checkbox" name="interests" value="Other products">Other products</label></fieldset>
+<label for="hwRequirements">Requirements (optional)</label><textarea id="hwRequirements" name="requirements" rows="3" maxlength="1000" data-clarity-mask="true"></textarea>
+<div class="hw-trap" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
+<p>We store your enquiry in our private Cloudflare database for responding and follow-up. Contact HAMMAD WORLD through the website to request correction or deletion. Please do not include sensitive information.</p>
+<label class="hw-consent"><input type="checkbox" name="consent" required>I agree to be contacted by HAMMAD WORLD regarding this enquiry.</label>
+<button id="hwLeadSubmit" type="submit">Submit enquiry</button>
+</form><p id="hwLeadMessage" role="status" aria-live="polite"></p>
+</dialog>
+<script>
+(()=>{'use strict';
+const d=document.getElementById('hwLeadDialog'),f=document.getElementById('hwLeadForm'),open=document.getElementById('hwLeadOpen'),close=document.getElementById('hwLeadClose'),submit=document.getElementById('hwLeadSubmit'),msg=document.getElementById('hwLeadMessage');
+let busy=false;
+open.addEventListener('click',()=>{if(f.hidden){f.hidden=false;msg.textContent='';}d.showModal();});
+close.addEventListener('click',()=>{if(!busy)d.close();});
+d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
+f.addEventListener('submit',async e=>{e.preventDefault();if(busy)return;const v=new FormData(f);const mobile=String(v.get('mobile')).trim().replace(/[\s()-]/g,'').replace(/^\+91(?=\d{10}$)/,'');const interests=v.getAll('interests');const name=String(v.get('customer_name')).trim(),location=String(v.get('location')).trim();if(name.length<2||location.length<2||!/^[6-9]\d{9}$/.test(mobile)||!interests.length){msg.textContent='Enter a valid name, Indian mobile number, location and select at least one product category.';return;}busy=true;submit.disabled=true;close.disabled=true;msg.textContent='Submitting enquiry…';
+try{const r=await fetch('https://hammad-world-leads.hammadworld25.workers.dev/enquiry',{method:'POST',mode:'cors',credentials:'omit',referrerPolicy:'no-referrer',headers:{'Content-Type':'application/json'},body:JSON.stringify({customer_name:name,mobile,location,interests,requirements:String(v.get('requirements')).trim(),website:String(v.get('website')),consent:v.has('consent')})});const result=await r.json();if(r.status!==201||result.success!==true){msg.textContent=r.status===429?'Too many requests. Please wait a minute and try again.':'Could not submit. Please check your details or contact us directly.';return;}f.reset();f.hidden=true;msg.textContent='Thank you! Your enquiry has been received. Our team will contact you.';close.focus();}catch{msg.textContent='Submission could not be confirmed. Please contact us directly or try again later.';}finally{busy=false;submit.disabled=false;close.disabled=false;}
+});})();
 </script>
 
 </body>
