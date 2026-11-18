@@ -941,6 +941,43 @@ window.addEventListener('online',()=>{if(indexError||searchError||categoryError)
 loadCatalog();
 
 </script>
+<style>
+#hwPrivacy {position:fixed;bottom:20px;left:12px;right:12px;max-width:490px;margin:auto;z-index:2147483000;background:#201335;color:#fff;border:1px solid #d4af37;border-radius:14px;padding:18px;box-shadow:0 8px 30px #0008;font:15px/1.45 system-ui,sans-serif}
+#hwPrivacy[hidden]{display:none!important} #hwPrivacy button,#hwPrivacySettings{cursor:pointer;padding:10px 14px;border:1px solid #d4af37;border-radius:8px;background:#201335;color:#fff;font:inherit} #hwPrivacyAccept{background:#d4af37!important;color:#161020!important} #hwPrivacySettings{margin-top:12px} #hwPrivacyActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+</style>
+<section id="hwPrivacy" aria-label="Analytics privacy preferences" hidden>
+<strong>Your privacy choices</strong><p>With your permission, Google Analytics and Microsoft Clarity help us understand visits, product interests, clicks and browsing behaviour, including masked session recordings. You can reject optional analytics and still browse the entire catalogue. Change your choice anytime using Privacy settings in the footer.</p>
+<div id="hwPrivacyActions"><button type="button" id="hwPrivacyAccept">Accept analytics</button><button type="button" id="hwPrivacyReject">Reject analytics</button></div>
+</section>
+<script>
+(()=>{
+'use strict';
+const key='hw_analytics_choice_v1', ga='G-PWRQYGMEN3', cl='zfh1tyw5vn';
+const panel=document.getElementById('hwPrivacy');
+let choice='',active=false,lastView='',searchTimerHW;
+try{choice=localStorage.getItem(key)||'';}catch(e){}
+const settings=document.createElement('button');settings.type='button';settings.id='hwPrivacySettings';settings.textContent='Privacy settings';document.querySelector('footer').append(settings);
+settings.onclick=()=>{panel.hidden=false;document.getElementById('hwPrivacyReject').focus();};
+const cleanURL=()=>location.origin+location.pathname;
+function event(name,params={}){if(active&&choice==='accept')window.gtag('event',name,{...params,page_location:cleanURL(),page_referrer:'',page_title:'HAMMAD WORLD Catalogue'});}
+function item(p){return {item_id:String(p.id).slice(0,100),item_name:String(p.itemName).slice(0,100),item_category:String(p.category).slice(0,100),item_category2:String(p.subcategory||'').slice(0,100)};}
+function view(){if(!active||!catalogIndex)return;const p=nav.product&&categoryItems()?.find(x=>x.id===nav.product);const cat=catalogIndex.categories.find(x=>x.category===nav.cat);if(nav.product&&!p)return;if(nav.cat&&!cat)return;const sub=nav.sub&&categoryItems()?.some(x=>x.subcategory===nav.sub)?nav.sub:'';const signature=JSON.stringify([p?p.id:'',cat?.category||'',sub,nav.mode==='other'?'other':'']);if(signature===lastView)return;lastView=signature;event('page_view');if(p)event('view_item',{items:[item(p)]});else if(cat)event('view_item_list',{item_list_name:String(cat.category+(sub?' / '+sub:'')).slice(0,100)});}
+function load(src){const s=document.createElement('script');s.async=true;s.src=src;document.head.append(s);}
+function start(){if(active)return;active=true;window['ga-disable-'+ga]=false;window.dataLayer=window.dataLayer||[];window.gtag=function(){window.dataLayer.push(arguments);};window.gtag('consent','default',{analytics_storage:'granted',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});window.gtag('js',new Date());window.gtag('config',ga,{send_page_view:false,allow_google_signals:false,allow_ad_personalization_signals:false,page_location:cleanURL(),page_referrer:'',page_title:'HAMMAD WORLD Catalogue'});load('https://www.googletagmanager.com/gtag/js?id='+ga);
+// Clarity sees the browser URL: only start on URLs with no unverified query fields or hash.
+const u=new URL(location.href);const safe=[...u.searchParams].every(([k,v])=>['category','type','group','product'].includes(k)&&((k==='category'&&catalogIndex?.categories.some(c=>c.category===v))||(k==='type'&&categoryItems()?.some(p=>p.subcategory===v))||(k==='group'&&['all','other'].includes(v))||(k==='product'&&categoryItems()?.some(p=>p.id===v))));
+if(safe&&!u.hash){window.clarity=window.clarity||function(){(window.clarity.q=window.clarity.q||[]).push(arguments);};window.clarity('consentv2',{ad_Storage:'denied',analytics_Storage:'granted'});load('https://www.clarity.ms/tag/'+cl);}
+view();}
+function choose(value){const was=active;choice=value;try{localStorage.setItem(key,value);}catch(e){}panel.hidden=true;if(value==='accept'){start();}else if(was){active=false;window['ga-disable-'+ga]=true;window.gtag?.('consent','update',{analytics_storage:'denied',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});window.clarity?.('consentv2',{ad_Storage:'denied',analytics_Storage:'denied'});location.reload();}}
+document.getElementById('hwPrivacyAccept').onclick=()=>choose('accept');document.getElementById('hwPrivacyReject').onclick=()=>choose('reject');
+document.getElementById('searchBox').setAttribute('data-clarity-mask','true');
+document.getElementById('searchBox').addEventListener('input',()=>{clearTimeout(searchTimerHW);if(!active)return;searchTimerHW=setTimeout(()=>{if(document.getElementById('searchBox').value.trim())event('search');},800);});
+document.addEventListener('click',e=>{const a=e.target.closest('a[href]');if(!a)return;try{const u=new URL(a.href);if(u.protocol==='tel:')event('call_click');else if(u.hostname==='wa.me'||u.hostname==='api.whatsapp.com')event('whatsapp_click');}catch(e){}},true);
+const observer=new MutationObserver(view);observer.observe(document.getElementById('grid'),{childList:true});observer.observe(document.getElementById('catBrowse'),{childList:true});
+if(choice==='accept')start();else if(choice!=='reject')panel.hidden=false;
+})();
+</script>
+
 </body>
 </html>
 
