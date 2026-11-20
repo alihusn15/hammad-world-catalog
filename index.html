@@ -444,7 +444,7 @@ header.hero .contact span{font-size:26px;line-height:1}
 <style>
 .collection-shortcuts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
 .collection-shortcuts button,.scene-browse{border:1px solid #ab9369;border-radius:4px;background:#fffaf0;color:#372b1c;font:inherit;padding:9px 14px;cursor:pointer}
-.catalogue-scene{display:grid;grid-template-columns:1.15fr 1fr;align-items:center;gap:clamp(20px,5vw,72px);padding:clamp(16px,3vw,48px);background:#f2f0e8;color:#292720;overflow:hidden;margin-bottom:18px}
+.catalogue-scene:focus-visible{outline:3px solid #8a662e;outline-offset:-3px}.catalogue-scene .scene-browse{display:inline-block}.catalogue-scene{text-decoration:none;cursor:pointer;display:grid;grid-template-columns:1.15fr 1fr;align-items:center;gap:clamp(20px,5vw,72px);padding:clamp(16px,3vw,48px);background:#f2f0e8;color:#292720;overflow:hidden;margin-bottom:18px}
 .catalogue-scene:nth-child(2n){background:#292c27;color:#fffaf0}
 .catalogue-scene:nth-child(2n) .scene-picture{order:2}
 .scene-picture{width:100%;aspect-ratio:3/2;object-fit:cover;display:block}
@@ -752,7 +752,7 @@ function renderShowroom(categories){
   const shortcuts=categories.map(c=>`<button ${action('category',c.category)}>${esc(c.category)}</button>`).join('');
   const scenes=ordered.map(c=>{
     const [image,description]=showroomScenes.get(c.category);
-    return `<article class="catalogue-scene"><img class="scene-picture" src="${image}" alt="" loading="lazy" width="768" height="512" style="height:auto"><div class="scene-copy"><h3>${esc(c.category)}</h3><p>${description}</p><button class="scene-browse" ${action('category',c.category)}>Browse ${esc(c.category)} · ${c.count.toLocaleString()} ${c.count===1?'item':'items'}</button></div></article>`;
+    return `<a class="catalogue-scene" href="${esc(routeURL({cat:c.category}))}" ${action('category',c.category)} aria-label="Browse ${esc(c.category)}"><img class="scene-picture" src="${image}" alt="" loading="lazy" width="768" height="512" style="height:auto"><div class="scene-copy"><h3>${esc(c.category)}</h3><p>${description}</p><span class="scene-browse">Browse ${esc(c.category)} · ${c.count.toLocaleString()} ${c.count===1?'item':'items'}</span></div></a>`;
   }).join('');
   const other=categories.filter(c=>!showroomScenes.has(c.category)).map(c=>catCard(c.category,c.count,photoUrl(c.cover),'category',c.category)).join('');
   container.innerHTML='<div class="section-top"><div><div class="eyebrow">The catalogue</div><h2>Explore our collections</h2></div><p>Materials for every part of your space.</p></div><nav class="collection-shortcuts" aria-label="Browse a collection">'+shortcuts+'</nav><div>'+scenes+'</div>'+(other?'<div class="row">'+other+'</div>':'');
